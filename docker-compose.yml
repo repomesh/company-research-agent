@@ -26,4 +26,3 @@ services:
     environment:
       - NODE_ENV=development
       - VITE_API_URL=http://localhost:8000 
-      - VITE_WS_URL=ws://localhost:8000

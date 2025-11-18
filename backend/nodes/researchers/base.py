@@ -4,11 +4,14 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List
 
-from openai import AsyncOpenAI
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 from tavily import AsyncTavilyClient
 
 from ...classes import ResearchState
+from ...classes.state import job_status
 from ...utils.references import clean_title
+from ...prompts import QUERY_FORMAT_GUIDELINES
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +24,13 @@ class BaseResearcher:
             raise ValueError("Missing API keys")
             
         self.tavily_client = AsyncTavilyClient(api_key=tavily_key)
-        self.openai_client = AsyncOpenAI(api_key=openai_key)
-        self.analyst_type = "base_researcher"  # Default type
+        self.llm = ChatOpenAI(
+            model="gpt-5.1",
+            temperature=0,
+            streaming=True,
+            api_key=openai_key
+        )
+        self.analyst_type = "base_researcher"
 
     @property
     def analyst_type(self) -> str:
@@ -34,325 +42,203 @@ class BaseResearcher:
     def analyst_type(self, value: str):
         self._analyst_type = value
 
-    async def generate_queries(self, state: Dict, prompt: str) -> List[str]:
+    async def generate_queries(self, state: Dict, prompt: str):
+        """Generate search queries and yield events as they're created"""
         company = state.get("company", "Unknown Company")
         industry = state.get("industry", "Unknown Industry")
-        hq = state.get("hq", "Unknown HQ")
+        hq_location = state.get("hq_location", "Unknown")
         current_year = datetime.now().year
-        websocket_manager = state.get('websocket_manager')
-        job_id = state.get('job_id')
+        job_id = state.get("job_id")
+        
+        logger.info(f"=== GENERATE_QUERIES START: job_id={job_id}, analyst={self.analyst_type} ===")
+        if not job_id:
+            logger.warning(f"⚠️ NO JOB_ID in state! Keys: {list(state.keys())}")
         
         try:
-            logger.info(f"Generating queries for {company} as {self.analyst_type}")
+            logger.info(f"Generating queries for {company} as {self.analyst_type}, job_id={job_id}")
             
-            response = await self.openai_client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"You are researching {company}, a company in the {industry} industry."
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""Researching {company} on {datetime.now().strftime("%B %d, %Y")}.
-{self._format_query_prompt(prompt, company, hq, current_year)}"""
-                    }
-                ],
-                temperature=0,
-                max_tokens=4096,
-                stream=True
-            )
+            # Create prompt template using LangChain
+            query_prompt = ChatPromptTemplate.from_messages([
+                ("system", "You are researching {company}, a company in the {industry} industry, headquartered in {hq_location}."),
+                ("user", """Researching {company} in {year}, as of {date}.
+{task_prompt}
+{format_guidelines}""")
+            ])
+            
+            # Create LCEL chain
+            chain = query_prompt | self.llm
             
             queries = []
             current_query = ""
             current_query_number = 1
 
-            async for chunk in response:
-                if chunk.choices[0].finish_reason == "stop":
-                    break
+            # Stream queries using LangChain's astream
+            async for chunk in chain.astream({
+                "company": company,
+                "industry": industry,
+                "hq_location": hq_location,
+                "year": current_year,
+                "date": datetime.now().strftime("%B %d, %Y"),
+                "task_prompt": prompt,
+                "format_guidelines": QUERY_FORMAT_GUIDELINES.format(company=company)
+            }):
+                current_query += chunk.content
+                
+                # Yield query generation progress
+                event = {
+                    "type": "query_generating",
+                    "query": current_query,
+                    "query_number": current_query_number,
+                    "category": self.analyst_type
+                }
+                
+                # Update job status if job_id provided
+                if job_id:
+                    try:
+                        logger.info(f"job_id={job_id}, job_id in job_status={job_id in job_status}")
+                        if job_id in job_status:
+                            job_status[job_id]["events"].append(event)
+                            logger.info(f"✓ Appended query_generating event to queue: {event.get('query', '')[:50]}")
+                        else:
+                            logger.warning(f"job_id {job_id} not found in job_status. Available keys: {list(job_status.keys())[:3]}")
+                    except Exception as e:
+                        logger.error(f"Error appending event: {e}")
+                
+                yield event
+                
+                # Parse completed queries on newline
+                if '\n' in current_query:
+                    parts = current_query.split('\n')
+                    current_query = parts[-1]
                     
-                content = chunk.choices[0].delta.content
-                if content:
-                    current_query += content
-                    
-                    # Stream the current state to the UI.
-                    if websocket_manager and job_id:
-                        await websocket_manager.send_status_update(
-                            job_id=job_id,
-                            status="query_generating",
-                            message="Generating research query",
-                            result={
-                                "query": current_query,
-                                "query_number": current_query_number,
-                                "category": self.analyst_type,
-                                "is_complete": False
+                    for query in parts[:-1]:
+                        query = query.strip()
+                        if query:
+                            queries.append(query)
+                            event = {
+                                "type": "query_generated",
+                                "query": query,
+                                "query_number": len(queries),
+                                "category": self.analyst_type
                             }
-                        )
-                    
-                    # If a newline is detected, treat it as a complete query.
-                    if '\n' in current_query:
-                        parts = current_query.split('\n')
-                        current_query = parts[-1]  # The last part is the start of the next query.
-                        
-                        for query in parts[:-1]:
-                            query = query.strip()
-                            if query:
-                                queries.append(query)
-                                if websocket_manager and job_id:
-                                    await websocket_manager.send_status_update(
-                                        job_id=job_id,
-                                        status="query_generated",
-                                        message="Generated new research query",
-                                        result={
-                                            "query": query,
-                                            "query_number": len(queries),
-                                            "category": self.analyst_type,
-                                            "is_complete": True
-                                        }
-                                    )
-                                current_query_number += 1
+                            
+                            # Update job status if job_id provided
+                            if job_id:
+                                try:
+                                    if job_id in job_status:
+                                        job_status[job_id]["events"].append(event)
+                                        logger.info("✓ Appended query_generated event to queue")
+                                    else:
+                                        logger.warning(f"job_id {job_id} not found in job_status for query_generated")
+                                except Exception as e:
+                                    logger.error(f"Error appending query_generated event: {e}")
+                            
+                            yield event
+                            current_query_number += 1
 
-            # Add any remaining query (even if not newline terminated)
+            # Add remaining query
             if current_query.strip():
-                query = current_query.strip()
-                queries.append(query)
-                if websocket_manager and job_id:
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="query_generated",
-                        message="Generated final research query",
-                        result={
-                            "query": query,
-                            "query_number": len(queries),
-                            "category": self.analyst_type,
-                            "is_complete": True
-                        }
-                    )
-                current_query_number += 1
+                queries.append(current_query.strip())
+                yield {
+                    "type": "query_generated",
+                    "query": current_query.strip(),
+                    "query_number": len(queries),
+                    "category": self.analyst_type
+                }
             
-            logger.info(f"Generated {len(queries)} queries for {self.analyst_type}: {queries}")
-
             if not queries:
                 raise ValueError(f"No queries generated for {company}")
 
-            # Limit to at most 4 queries.
-            queries = queries[:4]
+            queries = queries[:4]  # Limit to 4 queries
             logger.info(f"Final queries for {self.analyst_type}: {queries}")
             
-            return queries
+            yield {"type": "queries_complete", "queries": queries, "count": len(queries)}
             
         except Exception as e:
             logger.error(f"Error generating queries for {company}: {e}")
-            if websocket_manager and job_id:
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="error",
-                    message=f"Failed to generate research queries: {str(e)}",
-                    error=f"Query generation failed: {str(e)}"
-                )
-            return []
+            raise RuntimeError(f"Fatal API error - query generation failed: {str(e)}") from e
 
-    def _format_query_prompt(self, prompt, company, hq, year):
-        return f"""{prompt}
-
-        Important Guidelines:
-        - Focus ONLY on {company}-specific information
-        - Make queries very brief and to the point
-        - Provide exactly 4 search queries (one per line), with no hyphens or dashes
-        - DO NOT make assumptions about the industry - use only the provided industry information"""
-
-    def _fallback_queries(self, company, year):
-        return [
-            f"{company} overview {year}",
-            f"{company} recent news {year}",
-            f"{company} financial reports {year}",
-            f"{company} industry analysis {year}"
-        ]
-
-    async def search_single_query(self, query: str, websocket_manager=None, job_id=None) -> Dict[str, Any]:
-        """Execute a single search query with proper error handling."""
-        if not query or len(query.split()) < 3:
-            return {}
-
-        try:
-            if websocket_manager and job_id:
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="query_searching",
-                    message=f"Searching: {query}",
-                    result={
-                        "step": "Searching",
-                        "query": query
-                    }
-                )
-
-            # Add news topic for news analysts
-            search_params = {
-                "search_depth": "basic",
-                "include_raw_content": False,
-                "max_results": 5
-            }
-            
-            if self.analyst_type == "news_analyst":
-                search_params["topic"] = "news"
-            elif self.analyst_type == "financial_analyst":
-                search_params["topic"] = "finance"
-
-            results = await self.tavily_client.search(
-                query,
-                **search_params
-            )
-            
-            docs = {}
-            for result in results.get("results", []):
-                if not result.get("content") or not result.get("url"):
-                    continue
-                    
-                url = result.get("url")
-                title = result.get("title", "")
-                
-                # Clean up and validate the title using the references module
-                if title:
-                    title = clean_title(title)
-                    # If title is the same as URL or empty, set to empty to trigger extraction later
-                    if title.lower() == url.lower() or not title.strip():
-                        title = ""
-                
-                logger.info(f"Tavily search result for '{query}': URL={url}, Title='{title}'")
-                
-                docs[url] = {
-                    "title": title,
-                    "content": result.get("content", ""),
-                    "query": query,
-                    "url": url,
-                    "source": "web_search",
-                    "score": result.get("score", 0.0)
-                }
-
-            if websocket_manager and job_id:
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="query_searched",
-                    message=f"Found {len(docs)} results for: {query}",
-                    result={
-                        "step": "Searching",
-                        "query": query,
-                        "results_count": len(docs)
-                    }
-                )
-
-            return docs
-            
-        except Exception as e:
-            logger.error(f"Error searching query '{query}': {e}")
-            if websocket_manager and job_id:
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="query_error",
-                    message=f"Search failed for: {query}",
-                    result={
-                        "step": "Searching",
-                        "query": query,
-                        "error": str(e)
-                    }
-                )
-            return {}
-
-    async def search_documents(self, state: ResearchState, queries: List[str]) -> Dict[str, Any]:
-        """
-        Execute all Tavily searches in parallel at maximum speed
-        """
-        websocket_manager = state.get('websocket_manager')
-        job_id = state.get('job_id')
-
-        if not queries:
-            logger.error("No valid queries to search")
-            return {}
-
-        # Send status update for generated queries
-        if websocket_manager and job_id:
-            await websocket_manager.send_status_update(
-                job_id=job_id,
-                status="queries_generated",
-                message=f"Generated {len(queries)} queries for {self.analyst_type}",
-                result={
-                    "step": "Searching",
-                    "analyst": self.analyst_type,
-                    "queries": queries,
-                    "total_queries": len(queries)
-                }
-            )
-
-        # Prepare all search parameters upfront
-        search_params = {
+    def _get_search_params(self) -> Dict[str, Any]:
+        """Get search parameters based on analyst type"""
+        params = {
             "search_depth": "basic",
             "include_raw_content": False,
             "max_results": 5
         }
         
-        if self.analyst_type == "news_analyst":
-            search_params["topic"] = "news"
-        elif self.analyst_type == "financial_analyst":
-            search_params["topic"] = "finance"
+        topic_map = {
+            "news_analyzer": "news",
+            "financial_analyzer": "finance"
+        }
+        
+        if topic := topic_map.get(self.analyst_type):
+            params["topic"] = topic
+            
+        return params
+    
+    def _process_search_result(self, result: Dict[str, Any], query: str) -> Dict[str, Any]:
+        """Process a single search result into standardized format"""
+        if not result.get("content") or not result.get("url"):
+            return {}
+            
+        url = result.get("url")
+        title = clean_title(result.get("title", "")) if result.get("title") else ""
+        
+        # Reset empty or invalid titles
+        if not title or title.lower() == url.lower():
+            title = ""
+        
+        return {
+            "title": title,
+            "content": result.get("content", ""),
+            "query": query,
+            "url": url,
+            "source": "web_search",
+            "score": result.get("score", 0.0)
+        }
 
-        if websocket_manager and job_id:
-            await websocket_manager.send_status_update(
-                job_id=job_id,
-                status="search_started",
-                message=f"Using Tavily to search for {len(queries)} queries",
-                result={
-                    "step": "Searching",
-                    "total_queries": len(queries)
-                }
-            )
-        # Create all API calls upfront - direct Tavily client calls without the extra wrapper
-        search_tasks = [
-            self.tavily_client.search(query, **search_params)
-            for query in queries
-        ]
+    async def search_documents(self, state: ResearchState, queries: List[str]):
+        """Execute all Tavily searches in parallel and yield events"""
+        if not queries:
+            logger.error("No valid queries to search")
+            yield {"type": "error", "error": "No valid queries to search"}
+            return
 
-        # Execute all API calls in parallel
+        # Yield start event
+        yield {
+            "type": "search_started",
+            "message": f"Searching {len(queries)} queries",
+            "total_queries": len(queries)
+        }
+
+        # Execute all searches in parallel
+        search_params = self._get_search_params()
+        search_tasks = [self.tavily_client.search(query, **search_params) for query in queries]
+
         try:
-            results = await asyncio.gather(*search_tasks)
+            results = await asyncio.gather(*search_tasks, return_exceptions=True)
         except Exception as e:
             logger.error(f"Error during parallel search execution: {e}")
-            return {}
+            yield {"type": "error", "error": str(e)}
+            return
 
-        # Process results
+        # Process and merge results
         merged_docs = {}
         for query, result in zip(queries, results):
-            for item in result.get("results", []):
-                if not item.get("content") or not item.get("url"):
-                    continue
-                    
-                url = item.get("url")
-                title = item.get("title", "")
+            if isinstance(result, Exception):
+                logger.error(f"Search failed for query '{query}': {result}")
+                yield {"type": "query_error", "query": query, "error": str(result)}
+                continue
                 
-                if title:
-                    title = clean_title(title)
-                    if title.lower() == url.lower() or not title.strip():
-                        title = ""
+            for item in result.get("results", []):
+                if doc := self._process_search_result(item, query):
+                    merged_docs[doc["url"]] = doc
 
-                merged_docs[url] = {
-                    "title": title,
-                    "content": item.get("content", ""),
-                    "query": query,
-                    "url": url,
-                    "source": "web_search",
-                    "score": item.get("score", 0.0)
-                }
-
-        # Send completion status
-        if websocket_manager and job_id:
-            await websocket_manager.send_status_update(
-                job_id=job_id,
-                status="search_complete",
-                message=f"Search completed with {len(merged_docs)} documents found",
-                result={
-                    "step": "Searching",
-                    "total_documents": len(merged_docs),
-                    "queries_processed": len(queries)
-                }
-            )
-
-        return merged_docs
+        # Yield completion event
+        yield {
+            "type": "search_complete",
+            "message": f"Found {len(merged_docs)} documents",
+            "total_documents": len(merged_docs),
+            "queries_processed": len(queries),
+            "merged_docs": merged_docs
+        }

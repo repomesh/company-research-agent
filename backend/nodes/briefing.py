@@ -3,9 +3,19 @@ import logging
 import os
 from typing import Any, Dict, List, Union
 
-import google.generativeai as genai
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 from ..classes import ResearchState
+from ..classes.state import job_status
+from ..prompts import (
+    COMPANY_BRIEFING_PROMPT,
+    INDUSTRY_BRIEFING_PROMPT,
+    FINANCIAL_BRIEFING_PROMPT,
+    NEWS_BRIEFING_PROMPT,
+    BRIEFING_ANALYSIS_INSTRUCTION
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,155 +24,53 @@ class Briefing:
     
     def __init__(self) -> None:
         self.max_doc_length = 8000  # Maximum document content length
-        self.gemini_key = os.getenv("GEMINI_API_KEY")
-        if not self.gemini_key:
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_key:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
         
-        # Configure Gemini
-        genai.configure(api_key=self.gemini_key)
-        self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+        # Configure LangChain ChatGoogleGenerativeAI
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            temperature=0,
+            google_api_key=gemini_key,
+            max_retries=0
+        )
 
-    async def generate_category_briefing(
-        self, docs: Union[Dict[str, Any], List[Dict[str, Any]]], 
-        category: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        company = context.get('company', 'Unknown')
-        industry = context.get('industry', 'Unknown')
-        hq_location = context.get('hq_location', 'Unknown')
-        logger.info(f"Generating {category} briefing for {company} using {len(docs)} documents")
-
-        # Send category start status
-        if websocket_manager := context.get('websocket_manager'):
-            if job_id := context.get('job_id'):
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="briefing_start",
-                    message=f"Generating {category} briefing",
-                    result={
-                        "step": "Briefing",
-                        "category": category,
-                        "total_docs": len(docs)
-                    }
-                )
-
+    def _get_category_prompt(self, category: str) -> str:
+        """Get the category-specific prompt template"""
         prompts = {
-            'company': f"""Create a focused company briefing for {company}, a {industry} company based in {hq_location}.
-Key requirements:
-1. Start with: "{company} is a [what] that [does what] for [whom]"
-2. Structure using these exact headers and bullet points:
-
-### Core Product/Service
-* List distinct products/features
-* Include only verified technical capabilities
-
-### Leadership Team
-* List key leadership team members
-* Include their roles and expertise
-
-### Target Market
-* List specific target audiences
-* List verified use cases
-* List confirmed customers/partners
-
-### Key Differentiators
-* List unique features
-* List proven advantages
-
-### Business Model
-* Discuss product / service pricing
-* List distribution channels
-
-3. Each bullet must be a single, complete fact
-4. Never mention "no information found" or "no data available"
-5. No paragraphs, only bullet points
-6. Provide only the briefing. No explanations or commentary.""",
-
-            'industry': f"""Create a focused industry briefing for {company}, a {industry} company based in {hq_location}.
-Key requirements:
-1. Structure using these exact headers and bullet points:
-
-### Market Overview
-* State {company}'s exact market segment
-* List market size with year
-* List growth rate with year range
-
-### Direct Competition
-* List named direct competitors
-* List specific competing products
-* List market positions
-
-### Competitive Advantages
-• List unique technical features
-• List proven advantages
-
-### Market Challenges
-• List specific verified challenges
-
-2. Each bullet must be a single, complete news event.
-3. No paragraphs, only bullet points
-4. Never mention "no information found" or "no data available"
-5. Provide only the briefing. No explanation.""",
-
-            'financial': f"""Create a focused financial briefing for {company}, a {industry} company based in {hq_location}.
-Key requirements:
-1. Structure using these headers and bullet points:
-
-### Funding & Investment
-* Total funding amount with date
-* List each funding round with date
-* List named investors
-
-### Revenue Model
-* Discuss product / service pricing if applicable
-
-2. Include specific numbers when possible
-3. No paragraphs, only bullet points
-4. Never mention "no information found" or "no data available"
-5. NEVER repeat the same round of funding multiple times. ALWAYS assume that multiple funding rounds in the same month are the same round.
-6. NEVER include a range of funding amounts. Use your best judgement to determine the exact amount based on the information provided.
-6. Provide only the briefing. No explanation or commentary.""",
-
-            'news': f"""Create a focused news briefing for {company}, a {industry} company based in {hq_location}.
-Key requirements:
-1. Structure into these categories using bullet points:
-
-### Major Announcements
-* Product / service launches
-* New initiatives
-
-### Partnerships
-* Integrations
-* Collaborations
-
-### Recognition
-* Awards
-* Press coverage
-
-2. Sort newest to oldest
-3. One event per bullet point
-4. Do not mention "no information found" or "no data available"
-5. Never use ### headers, only bullet points
-6. Provide only the briefing. Do not provide explanations or commentary.""",
+            'company': COMPANY_BRIEFING_PROMPT,
+            'industry': INDUSTRY_BRIEFING_PROMPT,
+            'financial': FINANCIAL_BRIEFING_PROMPT,
+            'news': NEWS_BRIEFING_PROMPT,
         }
-        
-        # Normalize docs to a list of (url, doc) tuples
+        return prompts.get(category, 
+                          "Create a focused, informative and insightful research briefing on the company: {company} in the {industry} industry based on the provided documents.")
+    
+    def _prepare_documents(self, docs: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
+        """Prepare and format documents for briefing generation"""
+        # Normalize docs to list of (url, doc) tuples
         items = list(docs.items()) if isinstance(docs, dict) else [
             (doc.get('url', f'doc_{i}'), doc) for i, doc in enumerate(docs)
         ]
-        # Sort documents by evaluation score (highest first)
+        
+        # Sort by evaluation score
         sorted_items = sorted(
             items, 
             key=lambda x: float(x[1].get('evaluation', {}).get('overall_score', '0')), 
             reverse=True
         )
         
+        # Format documents with length limits
         doc_texts = []
         total_length = 0
-        for _ , doc in sorted_items:
+        for _, doc in sorted_items:
             title = doc.get('title', '')
             content = doc.get('raw_content') or doc.get('content', '')
+            
             if len(content) > self.max_doc_length:
                 content = content[:self.max_doc_length] + "... [content truncated]"
+            
             doc_entry = f"Title: {title}\n\nContent: {content}"
             if total_length + len(doc_entry) < 120000:  # Keep under limit
                 doc_texts.append(doc_entry)
@@ -171,63 +79,100 @@ Key requirements:
                 break
         
         separator = "\n" + "-" * 40 + "\n"
-        prompt = f"""{prompts.get(category, 'Create a focused, informative and insightful research briefing on the company: {company} in the {industry} industry based on the provided documents.')}
+        return f"{separator}{separator.join(doc_texts)}{separator}"
 
-Analyze the following documents and extract key information. Provide only the briefing, no explanations or commentary:
+    async def generate_category_briefing(
+        self, docs: Union[Dict[str, Any], List[Dict[str, Any]]], 
+        category: str, context: Dict[str, Any]
+    ):
+        """Generate category briefing and yield events"""
+        company = context.get('company', 'Unknown')
+        industry = context.get('industry', 'Unknown')
+        hq_location = context.get('hq_location', 'Unknown')
+        job_id = context.get('job_id')
+        
+        logger.info(f"Generating {category} briefing for {company} using {len(docs)} documents")
 
-{separator}{separator.join(doc_texts)}{separator}
+        # Emit briefing start event
+        event = {
+            "type": "briefing_start",
+            "category": category,
+            "total_docs": len(docs),
+            "step": "Briefing"
+        }
+        
+        if job_id:
+            try:
+                if job_id in job_status:
+                    job_status[job_id]["events"].append(event)
+            except Exception as e:
+                logger.error(f"Error appending briefing_start event: {e}")
+        
+        yield event
 
-"""
+        # Get category-specific prompt and prepare documents
+        category_prompt = self._get_category_prompt(category).format(
+            company=company, industry=industry, hq_location=hq_location
+        )
+        formatted_docs = self._prepare_documents(docs)
+        
+        # Create LCEL chain for briefing generation
+        briefing_prompt = ChatPromptTemplate.from_messages([
+            ("user", """{category_prompt}
+
+{instruction}
+
+{documents}""")
+        ])
+        
+        chain = briefing_prompt | self.llm | StrOutputParser()
         
         try:
             logger.info("Sending prompt to LLM")
-            response = self.gemini_model.generate_content(prompt)
-            content = response.text.strip()
+            content = await chain.ainvoke({
+                "category_prompt": category_prompt,
+                "instruction": BRIEFING_ANALYSIS_INSTRUCTION,
+                "documents": formatted_docs
+            })
+            
             if not content:
                 logger.error(f"Empty response from LLM for {category} briefing")
-                return {'content': ''}
+                yield {"type": "error", "error": "Empty response from LLM", "category": category}
+                yield {'content': ''}
+                return
 
-            # Send completion status
-            if websocket_manager := context.get('websocket_manager'):
-                if job_id := context.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="briefing_complete",
-                        message=f"Completed {category} briefing",
-                        result={
-                            "step": "Briefing",
-                            "category": category
-                        }
-                    )
-
-            return {'content': content}
+            # Emit completion event
+            event = {
+                "type": "briefing_complete",
+                "category": category,
+                "content_length": len(content),
+                "step": "Briefing"
+            }
+            
+            if job_id:
+                try:
+                    if job_id in job_status:
+                        job_status[job_id]["events"].append(event)
+                except Exception as e:
+                    logger.error(f"Error appending briefing_complete event: {e}")
+            
+            yield event
+            yield {'content': content.strip()}
         except Exception as e:
             logger.error(f"Error generating {category} briefing: {e}")
-            return {'content': ''}
+            raise RuntimeError(f"Fatal API error - {category} briefing generation failed: {str(e)}") from e
 
     async def create_briefings(self, state: ResearchState) -> ResearchState:
         """Create briefings for all categories in parallel."""
         company = state.get('company', 'Unknown Company')
-        websocket_manager = state.get('websocket_manager')
-        job_id = state.get('job_id')
+        logger.info(f"Creating section briefings for {company}")
         
-        # Send initial briefing status
-        if websocket_manager and job_id:
-            await websocket_manager.send_status_update(
-                job_id=job_id,
-                status="processing",
-                message="Starting research briefings",
-                result={"step": "Briefing"}
-            )
-
         context = {
             "company": company,
             "industry": state.get('industry', 'Unknown'),
             "hq_location": state.get('hq_location', 'Unknown'),
-            "websocket_manager": websocket_manager,
-            "job_id": job_id
+            "job_id": state.get('job_id')
         }
-        logger.info(f"Creating section briefings for {company}")
         
         # Mapping of curated data fields to briefing categories
         categories = {
@@ -247,8 +192,6 @@ Analyze the following documents and extract key information. Provide only the br
             
             if curated_data:
                 logger.info(f"Processing {data_field} with {len(curated_data)} documents")
-                
-                # Create task for this category
                 briefing_tasks.append({
                     'category': cat,
                     'briefing_key': briefing_key,
@@ -261,25 +204,29 @@ Analyze the following documents and extract key information. Provide only the br
 
         # Process briefings in parallel with rate limiting
         if briefing_tasks:
-            # Rate limiting semaphore for LLM API
             briefing_semaphore = asyncio.Semaphore(2)  # Limit to 2 concurrent briefings
             
             async def process_briefing(task: Dict[str, Any]) -> Dict[str, Any]:
                 """Process a single briefing with rate limiting."""
                 async with briefing_semaphore:
-                    result = await self.generate_category_briefing(
+                    result = {'content': ''}
+                    
+                    # Consume events from briefing generation
+                    # Exceptions will propagate immediately (no catching)
+                    async for event in self.generate_category_briefing(
                         task['curated_data'],
                         task['category'],
                         context
-                    )
+                    ):
+                        if isinstance(event, dict) and 'content' in event:
+                            result = event
                     
                     if result['content']:
                         briefings[task['category']] = result['content']
                         state[task['briefing_key']] = result['content']
                         logger.info(f"Completed {task['data_field']} briefing ({len(result['content'])} characters)")
                     else:
-                        logger.error(f"Failed to generate briefing for {task['data_field']}")
-                        state[task['briefing_key']] = ""
+                        raise RuntimeError(f"Empty briefing generated for {task['data_field']}")
                     
                     return {
                         'category': task['category'],
@@ -287,7 +234,7 @@ Analyze the following documents and extract key information. Provide only the br
                         'length': len(result['content']) if result['content'] else 0
                     }
 
-            # Process all briefings in parallel
+            # Process all briefings in parallel - exceptions will propagate and kill entire process
             results = await asyncio.gather(*[
                 process_briefing(task) 
                 for task in briefing_tasks

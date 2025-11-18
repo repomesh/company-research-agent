@@ -1,9 +1,9 @@
- [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.md)
-[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.zh.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.fr.md)
-[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.es.md)
-[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.jp.md)
-[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.kr.md)
+ [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.md)
+[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.zh.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.fr.md)
+[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.es.md)
+[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.jp.md)
+[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.kr.md)
 
 
 # Agent de Recherche d'Entreprise 🔍
@@ -20,11 +20,11 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 - **Recherche Multi-Sources** : Récupère des données de diverses sources, y compris les sites web d'entreprise, articles de presse, rapports financiers et analyses sectorielles
 - **Filtrage de contenu par IA** : Utilise le score de pertinence de Tavily pour la curation du contenu
-- **Streaming en temps réel** : Utilise les WebSockets pour diffuser l'avancement et les résultats de la recherche en temps réel
+- **Traitement Asynchrone** : Architecture efficace basée sur le polling pour suivre la progression de la recherche
 - **Architecture à double modèle** :
   - Gemini 2.0 Flash pour la synthèse de recherche à large contexte
-  - GPT-4.1 pour la mise en forme et l'édition précises du rapport
-- **Frontend React moderne** : Interface réactive avec mises à jour en temps réel, suivi de progression et options de téléchargement
+  - GPT-5.1 pour la mise en forme et l'édition précises du rapport
+- **Frontend React moderne** : Interface réactive avec suivi de progression et options de téléchargement
 - **Architecture modulaire** : Construite autour d'un pipeline de nœuds spécialisés de recherche et de traitement
 
 ## Cadre Agentique
@@ -43,7 +43,7 @@ La plateforme suit un cadre agentique avec des nœuds spécialisés qui traitent
    - `Collector` : Agrège les données de recherche de tous les analyseurs
    - `Curator` : Met en œuvre le filtrage de contenu et le scoring de pertinence
    - `Briefing` : Génère des synthèses par catégorie à l'aide de Gemini 2.0 Flash
-   - `Editor` : Compile et met en forme les synthèses dans un rapport final avec GPT-4.1-mini
+   - `Editor` : Compile et met en forme les synthèses dans un rapport final avec GPT-5.1
 
    ![web ui](<static/agent-flow.png>)
 
@@ -57,7 +57,7 @@ La plateforme exploite des modèles distincts pour des performances optimales :
    - Utilisé pour générer les synthèses initiales par catégorie
    - Efficace pour maintenir le contexte sur plusieurs documents
 
-2. **GPT-4.1 mini** (`editor.py`) :
+2. **GPT-5.1** (`editor.py`) :
    - Spécialisé dans la mise en forme et l'édition précises
    - Gère la structure markdown et la cohérence
    - Supérieur pour suivre des instructions de formatage exactes
@@ -67,7 +67,7 @@ La plateforme exploite des modèles distincts pour des performances optimales :
      - Mise en forme markdown
      - Streaming du rapport en temps réel
 
-Cette approche combine la capacité de Gemini à gérer de larges fenêtres de contexte avec la précision de GPT-4.1-mini pour le respect des consignes de formatage.
+Cette approche combine la capacité de Gemini à gérer de larges fenêtres de contexte avec la précision de GPT-5.1 pour le respect des consignes de formatage.
 
 ### Système de Curation de Contenu
 
@@ -83,46 +83,30 @@ La plateforme utilise un système de filtrage de contenu dans `curator.py` :
    - Le contenu est normalisé et nettoyé
    - Les URLs sont dédupliquées et standardisées
    - Les documents sont triés par score de pertinence
-   - Les mises à jour de progression sont envoyées en temps réel via WebSocket
+   - La recherche s'exécute de manière asynchrone en arrière-plan
 
-### Système de Communication en Temps Réel
+### Architecture Backend
 
-La plateforme implémente un système de communication en temps réel basé sur WebSocket :
+La plateforme implémente un système de communication simple basé sur le polling :
 
 ![web ui](<static/ui-2.png>)
 
 1. **Implémentation Backend** :
-   - Utilise le support WebSocket de FastAPI
-   - Maintient des connexions persistantes par tâche de recherche
-   - Envoie des mises à jour structurées pour divers événements :
-     ```python
-     await websocket_manager.send_status_update(
-         job_id=job_id,
-         status="processing",
-         message=f"Génération du briefing {category}",
-         result={
-             "step": "Briefing",
-             "category": category,
-             "total_docs": len(docs)
-         }
-     )
-     ```
-
+   - Utilise FastAPI avec support asynchrone
+   - Les tâches de recherche s'exécutent en arrière-plan
+   - Les résultats sont stockés et accessibles via des endpoints REST
+   - Suivi simple de l'état des tâches
+   
 2. **Intégration Frontend** :
-   - Les composants React s'abonnent aux mises à jour WebSocket
-   - Les mises à jour sont traitées et affichées en temps réel
-   - Différents composants UI gèrent des types d'updates spécifiques :
-     - Progression de la génération de requête
-     - Statistiques de curation de documents
-     - Statut de complétion des briefings
-     - Progression de la génération du rapport
+   - Le frontend React soumet des demandes de recherche
+   - Reçoit un job_id pour le suivi
+   - Effectue un polling sur l'endpoint `/research/{job_id}/report`
+   - Affiche le rapport final une fois terminé
 
-3. **Types de Statut** :
-   - `query_generating` : Mises à jour de création de requête en temps réel
-   - `document_kept` : Progression de la curation de documents
-   - `briefing_start/complete` : Statut de génération des briefings
-   - `report_chunk` : Streaming de la génération du rapport
-   - `curation_complete` : Statistiques finales des documents
+3. **Endpoints de l'API** :
+   - `POST /research` : Soumettre une nouvelle demande de recherche
+   - `GET /research/{job_id}/report` : Polling pour le rapport terminé
+   - `POST /generate-pdf` : Générer un PDF du contenu du rapport
 
 ## Configuration
 
@@ -132,7 +116,7 @@ La façon la plus simple de commencer est d'utiliser le script de configuration,
 
 1. Clonez le dépôt :
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -172,7 +156,7 @@ Si vous préférez configurer manuellement, suivez ces étapes :
 1. Clonez le dépôt :
 
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -232,7 +216,6 @@ Puis, ouvrez `ui/.env` et ajoutez vos variables d'environnement frontend :
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=votre_clé_google_maps_ici
 ```
 
@@ -243,7 +226,7 @@ L'application peut être exécutée à l'aide de Docker et Docker Compose :
 1. Clonez le dépôt :
 
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -276,7 +259,6 @@ Puis, ouvrez `ui/.env` et ajoutez vos variables d'environnement frontend :
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=votre_clé_google_maps_ici
 ```
 
@@ -351,7 +333,6 @@ npm run dev
 
    Le backend sera disponible sur :
    - Point d'accès API : `http://localhost:8000`
-   - Point d'accès WebSocket : `ws://localhost:8000/research/ws/{job_id}`
 
 2. Démarrez le serveur de développement frontend :
 

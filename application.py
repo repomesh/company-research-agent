@@ -1,14 +1,14 @@
 import asyncio
+import json
 import logging
 import os
 import uuid
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from backend.graph import Graph
 from backend.services.mongodb import MongoDBService
 from backend.services.pdf_service import PDFService
-from backend.services.websocket_manager import WebSocketManager
+from backend.classes.state import job_status
 
 # Load environment variables from .env file at startup
 env_path = Path(__file__).parent / '.env'
@@ -38,19 +38,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
-
-manager = WebSocketManager()
 pdf_service = PDFService({"pdf_output_dir": "pdfs"})
-
-job_status = defaultdict(lambda: {
-    "status": "pending",
-    "result": None,
-    "error": None,
-    "debug_info": [],
-    "company": None,
-    "report": None,
-    "last_update": datetime.now().isoformat()
-})
 
 mongodb = None
 if mongo_uri := os.getenv("MONGODB_URI"):
@@ -88,8 +76,7 @@ async def research(data: ResearchRequest):
         response = JSONResponse(content={
             "status": "accepted",
             "job_id": job_id,
-            "message": "Research started. Connect to WebSocket for updates.",
-            "websocket_url": f"/research/ws/{job_id}"
+            "message": "Research started. Connect to /research/{job_id}/stream for updates."
         })
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
@@ -101,74 +88,75 @@ async def research(data: ResearchRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def process_research(job_id: str, data: ResearchRequest):
+    """Process research request asynchronously and store results"""
     try:
         if mongodb:
             mongodb.create_job(job_id, data.dict())
-        await asyncio.sleep(1)  # Allow WebSocket connection
-
-        await manager.send_status_update(job_id, status="processing", message="Starting research")
+        
+        await asyncio.sleep(0.5)  # Brief delay
+        
+        logger.info(f"Starting research for {data.company}")
 
         graph = Graph(
             company=data.company,
             url=data.company_url,
             industry=data.industry,
             hq_location=data.hq_location,
-            websocket_manager=manager,
             job_id=job_id
         )
 
-        state = {}
-        async for s in graph.run(thread={}):
-            state.update(s)
+        final_state = {}
         
-        # Look for the compiled report in either location.
-        report_content = state.get('report') or (state.get('editor') or {}).get('report')
+        # Stream through the graph and update progress
+        async for state in graph.run(thread={}):
+            final_state.update(state)
+            node_name = list(state.keys())[0] if state else 'unknown'
+            logger.debug(f"Node completed: {node_name}")
+            
+            # Update job status with current step
+            job_status[job_id].update({
+                "status": "processing",
+                "current_step": node_name,
+                "last_update": datetime.now().isoformat()
+            })
+        
+        # Extract final report
+        report_content = final_state.get('report') or (final_state.get('editor') or {}).get('report')
+        
         if report_content:
-            logger.info(f"Found report in final state (length: {len(report_content)})")
+            logger.info(f"Research completed. Report length: {len(report_content)}")
+            
             job_status[job_id].update({
                 "status": "completed",
                 "report": report_content,
                 "company": data.company,
                 "last_update": datetime.now().isoformat()
             })
+            
             if mongodb:
                 mongodb.update_job(job_id=job_id, status="completed")
                 mongodb.store_report(job_id=job_id, report_data={"report": report_content})
-            await manager.send_status_update(
-                job_id=job_id,
-                status="completed",
-                message="Research completed successfully",
-                result={
-                    "report": report_content,
-                    "company": data.company
-                }
-            )
+            
+            logger.info(f"Research completed successfully for {data.company}")
         else:
-            logger.error(f"Research completed without finding report. State keys: {list(state.keys())}")
-            logger.error(f"Editor state: {state.get('editor', {})}")
-            
-            # Check if there was a specific error in the state
-            error_message = "No report found"
-            if error := state.get('error'):
-                error_message = f"Error: {error}"
-            
-            await manager.send_status_update(
-                job_id=job_id,
-                status="failed",
-                message="Research completed but no report was generated",
-                error=error_message
-            )
+            logger.error(f"Research completed without report. State keys: {list(final_state.keys())}")
+            job_status[job_id].update({
+                "status": "failed",
+                "error": "No report generated",
+                "last_update": datetime.now().isoformat()
+            })
 
     except Exception as e:
-        logger.error(f"Research failed: {str(e)}")
-        await manager.send_status_update(
-            job_id=job_id,
-            status="failed",
-            message=f"Research failed: {str(e)}",
-            error=str(e)
-        )
+        logger.error(f"Research failed: {str(e)}", exc_info=True)
+        job_status[job_id].update({
+            "status": "failed",
+            "error": str(e),
+            "last_update": datetime.now().isoformat()
+        })
+        
         if mongodb:
             mongodb.update_job(job_id=job_id, status="failed", error=str(e))
+
 @app.get("/")
 async def ping():
     return {"message": "Alive"}
@@ -180,33 +168,6 @@ async def get_pdf(filename: str):
         raise HTTPException(status_code=404, detail="PDF not found")
     return FileResponse(pdf_path, media_type='application/pdf', filename=filename)
 
-@app.websocket("/research/ws/{job_id}")
-async def websocket_endpoint(websocket: WebSocket, job_id: str):
-    try:
-        await websocket.accept()
-        await manager.connect(websocket, job_id)
-
-        if job_id in job_status:
-            status = job_status[job_id]
-            await manager.send_status_update(
-                job_id,
-                status=status["status"],
-                message="Connected to status stream",
-                error=status["error"],
-                result=status["result"]
-            )
-
-        while True:
-            try:
-                await websocket.receive_text()
-            except WebSocketDisconnect:
-                manager.disconnect(websocket, job_id)
-                break
-
-    except Exception as e:
-        logger.error(f"WebSocket error for job {job_id}: {str(e)}", exc_info=True)
-        manager.disconnect(websocket, job_id)
-
 @app.get("/research/{job_id}")
 async def get_research(job_id: str):
     if not mongodb:
@@ -216,6 +177,55 @@ async def get_research(job_id: str):
         raise HTTPException(status_code=404, detail="Research job not found")
     return job
 
+@app.get("/research/{job_id}/stream")
+async def stream_research(job_id: str):
+    """Stream research progress via SSE"""
+    async def event_generator():
+        try:
+            # Wait for job to exist
+            for _ in range(50):
+                if job_id in job_status:
+                    break
+                await asyncio.sleep(0.1)
+            
+            last_step = None
+            
+            # Stream status updates
+            while job_id in job_status:
+                result = job_status[job_id]
+                status = result.get("status")
+                current_step = result.get("current_step")
+                events = result.get("events", [])
+                
+                # Send node progress updates when step changes
+                if status == "processing" and current_step and current_step != last_step:
+                    data = json.dumps({"type": "progress", "step": current_step})
+                    yield f"data: {data}\n\n"
+                    last_step = current_step
+                
+                # Send all queued events (FIFO - pop from start)
+                while events:
+                    event = events.pop(0)
+                    logger.info(f"SSE: Sending event type={event.get('type')}")
+                    data = json.dumps(event)
+                    yield f"data: {data}\n\n"
+                
+                if status == "completed" and (report := result.get("report")):
+                    data = json.dumps({"type": "complete", "report": report})
+                    yield f"data: {data}\n\n"
+                    break
+                elif status == "failed":
+                    data = json.dumps({"type": "error", "error": result.get("error", "Unknown error")})
+                    yield f"data: {data}\n\n"
+                    break
+                
+                await asyncio.sleep(0.1)  # Faster polling for responsive updates
+        except Exception as e:
+            data = json.dumps({"type": "error", "error": str(e)})
+            yield f"data: {data}\n\n"
+    
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 @app.get("/research/{job_id}/report")
 async def get_research_report(job_id: str):
     if not mongodb:
@@ -223,11 +233,22 @@ async def get_research_report(job_id: str):
             result = job_status[job_id]
             if report := result.get("report"):
                 return {"report": report}
-        raise HTTPException(status_code=404, detail="Report not found")
+            # Job exists but report not ready yet
+            return JSONResponse(
+                status_code=202,
+                content={"status": result.get("status", "pending"), "message": "Report not ready yet"}
+            )
+        raise HTTPException(status_code=404, detail="Job not found")
     
     report = mongodb.get_report(job_id)
     if not report:
-        raise HTTPException(status_code=404, detail="Research report not found")
+        # Check if job exists
+        if job := mongodb.get_job(job_id):
+            return JSONResponse(
+                status_code=202,
+                content={"status": job.get("status", "pending"), "message": "Report not ready yet"}
+            )
+        raise HTTPException(status_code=404, detail="Job not found")
     return report
 
 @app.post("/generate-pdf")

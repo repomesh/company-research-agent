@@ -1,8 +1,9 @@
-from typing import Any, Dict
+from typing import Any
 
 from langchain_core.messages import AIMessage
 
 from ...classes import ResearchState
+from ...prompts import NEWS_SCANNER_QUERY_PROMPT
 from .base import BaseResearcher
 
 
@@ -11,66 +12,46 @@ class NewsScanner(BaseResearcher):
         super().__init__()
         self.analyst_type = "news_analyzer"
 
-    async def analyze(self, state: ResearchState) -> Dict[str, Any]:
+    async def analyze(self, state: ResearchState):
+        """Analyze news and yield events"""
         company = state.get('company', 'Unknown Company')
-        msg = [f"📰 News Scanner analyzing {company}"]
         
-        # Generate search queries using LLM
-        queries = await self.generate_queries(state, """
-        Generate queries on the recent news coverage of {company} such as:
-        - Recent company announcements
-        - Press releases
-        - New partnerships
-        """)
-
+        # Generate search queries and yield events
+        queries = []
+        async for event in self.generate_queries(state, NEWS_SCANNER_QUERY_PROMPT):
+            yield event
+            if event.get("type") == "queries_complete":
+                queries = event.get("queries", [])
+        
+        # Log subqueries
         subqueries_msg = "🔍 Subqueries for news analysis:\n" + "\n".join([f"• {query}" for query in queries])
-        messages = state.get('messages', [])
-        messages.append(AIMessage(content=subqueries_msg))
-        state['messages'] = messages
+        state.setdefault('messages', []).append(AIMessage(content=subqueries_msg))
         
-        news_data = {}
+        # Start with site scrape data
+        news_data = dict[str, Any](state.get('site_scrape', {}))
         
-        # Include site_scrape data for news analysis
-        if site_scrape := state.get('site_scrape'):
-            msg.append(f"\n📊 Including {len(site_scrape)} pages from company website...")
-            news_data.update(site_scrape)
-
-        # Perform additional research with recent time filter
-        try:
-            # Store documents with their respective queries
-            for query in queries:
-                documents = await self.search_documents(state, [query])
-                if documents:  # Only process if we got results
-                    for url, doc in documents.items():
-                        doc['query'] = query  # Associate each document with its query
-                        news_data[url] = doc
-            
-            msg.append(f"\n✓ Found {len(news_data)} documents")
-            if websocket_manager := state.get('websocket_manager'):
-                if job_id := state.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="processing",
-                        message=f"Used Tavily Search to find {len(news_data)} documents",
-                        result={
-                            "step": "Searching",
-                            "analyst_type": "News Scanner",
-                            "queries": queries
-                        }
-                    )
-        except Exception as e:
-            msg.append(f"\n⚠️ Error during research: {str(e)}")
+        # Search and merge documents, yielding events
+        documents = {}
+        async for event in self.search_documents(state, queries):
+            yield event
+            if event.get("type") == "search_complete":
+                documents = event.get("merged_docs", {})
         
-        # Update state with our findings
-        messages = state.get('messages', [])
-        messages.append(AIMessage(content="\n".join(msg)))
-        state['messages'] = messages
+        news_data.update(documents)
+        
+        # Update state
+        completion_msg = f"📰 News Scanner found {len(news_data)} documents for {company}"
+        state.setdefault('messages', []).append(AIMessage(content=completion_msg))
         state['news_data'] = news_data
         
-        return {
-            'message': msg,
-            'news_data': news_data
-        }
+        yield {"type": "analysis_complete", "data_type": "news_data", "count": len(news_data)}
+        yield {'message': [completion_msg], 'news_data': news_data}
 
-    async def run(self, state: ResearchState) -> Dict[str, Any]:
-        return await self.analyze(state) 
+    async def run(self, state: ResearchState):
+        """Run analysis and yield all events"""
+        result = None
+        async for event in self.analyze(state):
+            yield event
+            if "message" in event or "news_data" in event:
+                result = event
+        yield result or {} 

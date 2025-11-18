@@ -1,9 +1,9 @@
- [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.md)
-[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.zh.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.fr.md)
-[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.es.md)
-[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.jp.md)
-[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.kr.md)
+ [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.md)
+[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.zh.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.fr.md)
+[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.es.md)
+[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.jp.md)
+[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.kr.md)
 
 
 # 기업 조사 에이전트 🔍
@@ -20,11 +20,11 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 - **멀티소스 조사**: 기업 웹사이트, 뉴스 기사, 재무 보고서, 업계 분석 등 다양한 소스에서 데이터 수집
 - **AI 콘텐츠 필터링**: Tavily의 관련성 점수를 사용한 콘텐츠 큐레이션
-- **실시간 스트리밍**: WebSocket을 사용하여 조사 진행 상황과 결과를 실시간으로 스트리밍
+- **비동기 처리**: 조사 진행 상황을 추적하기 위한 효율적인 폴링 기반 아키텍처
 - **듀얼 모델 아키텍처**:
   - 대규모 컨텍스트 조사 종합을 위한 Gemini 2.0 Flash
-  - 정밀한 보고서 형식 지정 및 편집을 위한 GPT-4.1
-- **모던 React 프론트엔드**: 실시간 업데이트, 진행 상황 추적, 다운로드 옵션을 갖춘 반응형 인터페이스
+  - 정밀한 보고서 형식 지정 및 편집을 위한 GPT-5.1
+- **모던 React 프론트엔드**: 진행 상황 추적과 다운로드 옵션을 갖춘 반응형 인터페이스
 - **모듈러 아키텍처**: 전문화된 조사 및 처리 노드 파이프라인을 중심으로 구축
 
 ## 에이전트 프레임워크
@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
    - `Collector`: 모든 분석기에서 조사 데이터 집계
    - `Curator`: 콘텐츠 필터링 및 관련성 점수 매기기 구현
    - `Briefing`: Gemini 2.0 Flash를 사용하여 카테고리별 요약 생성
-   - `Editor`: GPT-4.1-mini로 요약을 최종 보고서로 컴파일 및 형식 지정
+   - `Editor`: GPT-5.1로 요약을 최종 보고서로 컴파일 및 형식 지정
 
    ![web ui](<static/agent-flow.png>)
 
@@ -57,7 +57,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
    - 카테고리별 초기 요약 생성에 사용
    - 여러 문서에 걸친 컨텍스트 유지에 효율적
 
-2. **GPT-4.1 mini** (`editor.py`):
+2. **GPT-5.1** (`editor.py`):
    - 정밀한 형식 지정 및 편집에 특화
    - Markdown 구조 및 일관성 처리
    - 정확한 형식 지정 지침 준수에 우수
@@ -67,7 +67,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
      - Markdown 형식 지정
      - 실시간 보고서 스트리밍
 
-이 접근 방식은 Gemini의 대규모 컨텍스트 윈도우 처리 능력과 GPT-4.1-mini의 형식 지정 지침 정밀도를 결합합니다.
+이 접근 방식은 Gemini의 대규모 컨텍스트 윈도우 처리 능력과 GPT-5.1의 형식 지정 지침 정밀도를 결합합니다.
 
 ### 콘텐츠 큐레이션 시스템
 
@@ -83,46 +83,30 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
    - 콘텐츠가 정규화되고 정리됩니다
    - URL이 중복 제거되고 표준화됩니다
    - 문서가 관련성 점수로 정렬됩니다
-   - 진행 상황 업데이트가 WebSocket을 통해 실시간으로 전송됩니다
+   - 조사가 백그라운드에서 비동기적으로 실행됩니다
 
-### 실시간 통신 시스템
+### 백엔드 아키텍처
 
-이 플랫폼은 WebSocket 기반 실시간 통신 시스템을 구현합니다:
+플랫폼은 폴링 기반의 간단한 통신 시스템을 구현합니다:
 
 ![web ui](<static/ui-2.png>)
 
 1. **백엔드 구현**:
-   - FastAPI의 WebSocket 지원 사용
-   - 조사 작업당 지속적인 연결 유지
-   - 다양한 이벤트에 대한 구조화된 업데이트 전송:
-     ```python
-     await websocket_manager.send_status_update(
-         job_id=job_id,
-         status="processing",
-         message=f"{category} 브리핑 생성 중",
-         result={
-             "step": "Briefing",
-             "category": category,
-             "total_docs": len(docs)
-         }
-     )
-     ```
-
+   - 비동기 지원이 있는 FastAPI 사용
+   - 조사 작업이 백그라운드에서 실행
+   - 결과는 REST 엔드포인트를 통해 저장 및 액세스
+   - 간단한 작업 상태 추적
+   
 2. **프론트엔드 통합**:
-   - React 컴포넌트가 WebSocket 업데이트를 구독
-   - 업데이트가 실시간으로 처리되고 표시됩니다
-   - 다양한 UI 컴포넌트가 특정 업데이트 유형을 처리:
-     - 쿼리 생성 진행 상황
-     - 문서 큐레이션 통계
-     - 브리핑 완료 상태
-     - 보고서 생성 진행 상황
+   - React 프론트엔드가 조사 요청을 제출
+   - 추적을 위한 job_id 수신
+   - `/research/{job_id}/report` 엔드포인트 폴링
+   - 완료 시 최종 보고서 표시
 
-3. **상태 유형**:
-   - `query_generating`: 실시간 쿼리 생성 업데이트
-   - `document_kept`: 문서 큐레이션 진행 상황
-   - `briefing_start/complete`: 브리핑 생성 상태
-   - `report_chunk`: 보고서 생성 스트리밍
-   - `curation_complete`: 최종 문서 통계
+3. **API 엔드포인트**:
+   - `POST /research`: 새 조사 요청 제출
+   - `GET /research/{job_id}/report`: 완료된 보고서 폴링
+   - `POST /generate-pdf`: 보고서 콘텐츠에서 PDF 생성
 
 ## 설정
 
@@ -132,7 +116,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 1. 저장소 클론:
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -170,7 +154,7 @@ chmod +x setup.sh
 
 1. 저장소 클론:
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -228,7 +212,6 @@ cp ui/.env.development.example ui/.env
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
@@ -238,7 +221,7 @@ VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 1. 저장소 클론:
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -271,7 +254,6 @@ cp ui/.env.development.example ui/.env
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
@@ -340,7 +322,6 @@ npm run dev
 
    백엔드는 다음에서 사용 가능합니다:
    - API 엔드포인트: `http://localhost:8000`
-   - WebSocket 엔드포인트: `ws://localhost:8000/research/ws/{job_id}`
 
 2. 프론트엔드 개발 서버 시작:
    ```bash

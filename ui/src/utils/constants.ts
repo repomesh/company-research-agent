@@ -1,10 +1,5 @@
-// API and WebSocket URLs
+// API URL
 export const API_URL = import.meta.env.VITE_API_URL;
-export const WS_URL = import.meta.env.VITE_WS_URL;
-
-// WebSocket Configuration
-export const MAX_RECONNECT_ATTEMPTS = 3;
-export const RECONNECT_DELAY = 2000; // 2 seconds
 
 // Animation Styles
 export const writingAnimation = `

@@ -28,13 +28,59 @@ const LocationInput: React.FC<LocationInputProps> = ({ value, onChange, classNam
 
   // Load the Google Maps API
   useEffect(() => {
+    const loadGoogleMapsScript = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        // Check if API key is available
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) {
+          console.warn('Google Maps API key not configured. Location autocomplete disabled.');
+          reject(new Error('Google Maps API key not configured'));
+          return;
+        }
+
+        // Check if already loaded
+        if (window.google?.maps?.places) {
+          resolve();
+          return;
+        }
+
+        // Check if script is already being loaded
+        if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+          const checkLoaded = setInterval(() => {
+            if (window.google?.maps?.places) {
+              clearInterval(checkLoaded);
+              resolve();
+            }
+          }, 100);
+          setTimeout(() => {
+            clearInterval(checkLoaded);
+            reject(new Error('Timeout loading Google Maps'));
+          }, 10000);
+          return;
+        }
+
+        // Create callback
+        window.initGoogleMapsCallback = () => {
+          resolve();
+        };
+
+        // Load script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMapsCallback`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+        document.head.appendChild(script);
+      });
+    };
+
     const loadApi = async () => {
       try {
         await loadGoogleMapsScript();
         setIsApiLoaded(true);
       } catch (error) {
-        console.error('Failed to load Google Maps API:', error);
-        // Ensure input is visible when Google Maps fails to load
+        console.warn('Google Maps autocomplete not available:', error instanceof Error ? error.message : error);
+        // Gracefully degrade to regular text input
         if (inputRef.current) {
           inputRef.current.style.display = '';
         }
