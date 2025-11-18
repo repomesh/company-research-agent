@@ -1,30 +1,41 @@
 import logging
 import os
-from typing import Any, Dict
+from typing import Dict
 
 from langchain_core.messages import AIMessage
-from openai import AsyncOpenAI
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 from ..classes import ResearchState
+from ..classes.state import job_status
 from ..utils.references import format_references_section
+from ..prompts import (
+    EDITOR_SYSTEM_MESSAGE,
+    COMPILE_CONTENT_PROMPT,
+    CONTENT_SWEEP_SYSTEM_MESSAGE,
+    CONTENT_SWEEP_PROMPT
+)
 
 logger = logging.getLogger(__name__)
-
-
-
 
 class Editor:
     """Compiles individual section briefings into a cohesive final report."""
     
     def __init__(self) -> None:
-        self.openai_key = os.getenv("OPENAI_API_KEY")
-        if not self.openai_key:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if not openai_key:
             raise ValueError("OPENAI_API_KEY environment variable is not set")
         
-        # Configure OpenAI
-        self.openai_client = AsyncOpenAI(api_key=self.openai_key)
+        # Configure LangChain ChatOpenAI
+        self.llm = ChatOpenAI(
+            model="gpt-4o",
+            temperature=0,
+            streaming=True,
+            api_key=openai_key
+        )
         
-        # Initialize context dictionary for use across methods
+        # Initialize context dictionary
         self.context = {
             "company": "Unknown Company",
             "industry": "Unknown",
@@ -34,6 +45,7 @@ class Editor:
     async def compile_briefings(self, state: ResearchState) -> ResearchState:
         """Compile individual briefing categories from state into a final report."""
         company = state.get('company', 'Unknown Company')
+        job_id = state.get('job_id')
         
         # Update context with values from state
         self.context = {
@@ -42,26 +54,18 @@ class Editor:
             "hq_location": state.get('hq_location', 'Unknown')
         }
         
-        # Send initial compilation status
-        if websocket_manager := state.get('websocket_manager'):
-            if job_id := state.get('job_id'):
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="processing",
-                    message=f"Starting report compilation for {company}",
-                    result={
-                        "step": "Editor",
-                        "substep": "initialization"
-                    }
-                )
-
-        context = {
-            "company": company,
-            "industry": state.get('industry', 'Unknown'),
-            "hq_location": state.get('hq_location', 'Unknown')
-        }
-        
         msg = [f"📑 Compiling final report for {company}..."]
+        
+        # Emit report compilation start event
+        if job_id:
+            try:
+                if job_id in job_status:
+                    job_status[job_id]["events"].append({
+                        "type": "report_compilation",
+                        "message": f"Compiling final report for {company}"
+                    })
+            except Exception as e:
+                logger.error(f"Error appending report_compilation event: {e}")
         
         # Pull individual briefings from dedicated state keys
         briefing_keys = {
@@ -70,19 +74,6 @@ class Editor:
             'financial': 'financial_briefing',
             'news': 'news_briefing'
         }
-
-        # Send briefing collection status
-        if websocket_manager := state.get('websocket_manager'):
-            if job_id := state.get('job_id'):
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="processing",
-                    message="Collecting section briefings",
-                    result={
-                        "step": "Editor",
-                        "substep": "collecting_briefings"
-                    }
-                )
 
         individual_briefings = {}
         for category, key in briefing_keys.items():
@@ -98,301 +89,140 @@ class Editor:
             logger.error("No briefings found in state")
         else:
             try:
-                compiled_report = await self.edit_report(state, individual_briefings, context)
+                compiled_report = await self.edit_report(state, individual_briefings)
                 if not compiled_report or not compiled_report.strip():
                     logger.error("Compiled report is empty!")
                 else:
                     logger.info(f"Successfully compiled report with {len(compiled_report)} characters")
             except Exception as e:
                 logger.error(f"Error during report compilation: {e}")
+        
         state.setdefault('messages', []).append(AIMessage(content="\n".join(msg)))
         return state
     
-    async def edit_report(self, state: ResearchState, briefings: Dict[str, str], context: Dict[str, Any]) -> str:
+    async def edit_report(self, state: ResearchState, briefings: Dict[str, str]) -> str:
         """Compile section briefings into a final report and update the state."""
         try:
-            company = self.context["company"]
+            logger.info("Starting report compilation")
+            job_id = state.get('job_id')
             
             # Step 1: Initial Compilation
-            if websocket_manager := state.get('websocket_manager'):
-                if job_id := state.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="processing",
-                        message="Compiling initial research report",
-                        result={
-                            "step": "Editor",
-                            "substep": "compilation"
-                        }
-                    )
-
-            edited_report = await self.compile_content(state, briefings, company)
+            edited_report = await self.compile_content(state, briefings)
             if not edited_report:
                 logger.error("Initial compilation failed")
                 return ""
 
-            # Step 2: Deduplication and Cleanup
-            if websocket_manager := state.get('websocket_manager'):
-                if job_id := state.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="processing",
-                        message="Cleaning up and organizing report",
-                        result={
-                            "step": "Editor",
-                            "substep": "cleanup"
-                        }
-                    )
-
-            # Step 3: Formatting Final Report
-            if websocket_manager := state.get('websocket_manager'):
-                if job_id := state.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="processing",
-                        message="Formatting final report",
-                        result={
-                            "step": "Editor",
-                            "substep": "format"
-                        }
-                    )
-            final_report = await self.content_sweep(state, edited_report, company)
+            # Step 2 & 3: Content sweep and streaming
+            final_report = ""
+            async for event in self.content_sweep(edited_report):
+                # Forward streaming events to job_status
+                if isinstance(event, dict) and job_id:
+                    try:
+                        if job_id in job_status:
+                            job_status[job_id]["events"].append(event)
+                            logger.debug(f"Appended report_chunk event ({len(event.get('chunk', ''))} chars)")
+                    except Exception as e:
+                        logger.error(f"Error appending report_chunk event: {e}")
+                
+                # Accumulate the text
+                if isinstance(event, str):
+                    final_report = event
             
-            final_report = final_report or ""
+            final_report = final_report or edited_report or ""
             
             logger.info(f"Final report compiled with {len(final_report)} characters")
             if not final_report.strip():
                 logger.error("Final report is empty!")
                 return ""
             
-            logger.info("Final report preview:")
-            logger.info(final_report[:500])
-            
-            # Update state with the final report in two locations
+            # Update state with the final report
             state['report'] = final_report
             state['status'] = "editor_complete"
             if 'editor' not in state or not isinstance(state['editor'], dict):
                 state['editor'] = {}
             state['editor']['report'] = final_report
-            logger.info(f"Report length in state: {len(state.get('report', ''))}")
-            
-            if websocket_manager := state.get('websocket_manager'):
-                if job_id := state.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="editor_complete",
-                        message="Research report completed",
-                        result={
-                            "step": "Editor",
-                            "report": final_report,
-                            "company": company,
-                            "is_final": True,
-                            "status": "completed"
-                        }
-                    )
             
             return final_report
         except Exception as e:
             logger.error(f"Error in edit_report: {e}")
             return ""
     
-    async def compile_content(self, state: ResearchState, briefings: Dict[str, str], company: str) -> str:
-        """Initial compilation of research sections."""
+    async def compile_content(self, state: ResearchState, briefings: Dict[str, str]) -> str:
+        """Initial compilation of research sections using LCEL."""
         combined_content = "\n\n".join(content for content in briefings.values())
         
         references = state.get('references', [])
         reference_text = ""
         if references:
             logger.info(f"Found {len(references)} references to add during compilation")
-            
-            # Get pre-processed reference info from curator
             reference_info = state.get('reference_info', {})
             reference_titles = state.get('reference_titles', {})
-            
-            logger.info(f"Reference info from state: {reference_info}")
-            logger.info(f"Reference titles from state: {reference_titles}")
-            
-            # Use the references module to format the references section
             reference_text = format_references_section(references, reference_info, reference_titles)
             logger.info(f"Added {len(references)} references during compilation")
         
-        # Use values from centralized context
-        company = self.context["company"]
-        industry = self.context["industry"]
-        hq_location = self.context["hq_location"]
+        # Create LCEL chain for compilation
+        compile_prompt = ChatPromptTemplate.from_messages([
+            ("system", EDITOR_SYSTEM_MESSAGE),
+            ("user", COMPILE_CONTENT_PROMPT)
+        ])
         
-        prompt = f"""You are compiling a comprehensive research report about {company}.
-
-Compiled briefings:
-{combined_content}
-
-Create a comprehensive and focused report on {company}, a {industry} company headquartered in {hq_location} that:
-1. Integrates information from all sections into a cohesive non-repetitive narrative
-2. Maintains important details from each section
-3. Logically organizes information and removes transitional commentary / explanations
-4. Uses clear section headers and structure
-
-Formatting rules:
-Strictly enforce this EXACT document structure:
-
-# {company} Research Report
-
-## Company Overview
-[Company content with ### subsections]
-
-## Industry Overview
-[Industry content with ### subsections]
-
-## Financial Overview
-[Financial content with ### subsections]
-
-## News
-[News content with ### subsections]
-
-Return the report in clean markdown format. No explanations or commentary."""
+        chain = compile_prompt | self.llm | StrOutputParser()
         
         try:
-            response = await self.openai_client.chat.completions.create(
-                model="gpt-4.1",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert report editor that compiles research briefings into comprehensive company reports."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0,
-                stream=False
-            )
-            initial_report = response.choices[0].message.content.strip()
+            initial_report = await chain.ainvoke({
+                "company": self.context["company"],
+                "industry": self.context["industry"],
+                "hq_location": self.context["hq_location"],
+                "combined_content": combined_content
+            })
             
-            # Append the references section after LLM processing
+            # Append references section
             if reference_text:
                 initial_report = f"{initial_report}\n\n{reference_text}"
             
             return initial_report
         except Exception as e:
             logger.error(f"Error in initial compilation: {e}")
-            return (combined_content or "").strip()
+            return combined_content or ""
         
-    async def content_sweep(self, state: ResearchState, content: str, company: str) -> str:
-        """Sweep the content for any redundant information."""
-        # Use values from centralized context
-        company = self.context["company"]
-        industry = self.context["industry"]
-        hq_location = self.context["hq_location"]
+    async def content_sweep(self, content: str):
+        """Sweep the content for any redundant information using LCEL streaming and yield events."""
+        # Create LCEL chain for content sweep
+        sweep_prompt = ChatPromptTemplate.from_messages([
+            ("system", CONTENT_SWEEP_SYSTEM_MESSAGE),
+            ("user", CONTENT_SWEEP_PROMPT)
+        ])
         
-        prompt = f"""You are an expert briefing editor. You are given a report on {company}.
-
-Current report:
-{content}
-
-1. Remove redundant or repetitive information
-2. Remove information that is not relevant to {company}, the {industry} company headquartered in {hq_location}.
-3. Remove sections lacking substantial content
-4. Remove any meta-commentary (e.g. "Here is the news...")
-
-Strictly enforce this EXACT document structure:
-
-## Company Overview
-[Company content with ### subsections]
-
-## Industry Overview
-[Industry content with ### subsections]
-
-## Financial Overview
-[Financial content with ### subsections]
-
-## News
-[News content with ### subsections]
-
-## References
-[References in MLA format - PRESERVE EXACTLY AS PROVIDED]
-
-Critical rules:
-1. The document MUST start with "# {company} Research Report"
-2. The document MUST ONLY use these exact ## headers in this order:
-   - ## Company Overview
-   - ## Industry Overview
-   - ## Financial Overview
-   - ## News
-   - ## References
-3. NO OTHER ## HEADERS ARE ALLOWED
-4. Use ### for subsections in Company/Industry/Financial sections
-5. News section should only use bullet points (*), never headers
-6. Never use code blocks (```)
-7. Never use more than one blank line between sections
-8. Format all bullet points with *
-9. Add one blank line before and after each section/list
-10. DO NOT CHANGE the format of the references section
-
-Return the polished report in flawless markdown format. No explanation.
-
-Return the cleaned report in flawless markdown format. No explanations or commentary."""
+        chain = sweep_prompt | self.llm | StrOutputParser()
         
         try:
-            response = await self.openai_client.chat.completions.create(
-                model="gpt-4.1-mini", 
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert markdown formatter that ensures consistent document structure."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0,
-                stream=True
-            )
-            
             accumulated_text = ""
             buffer = ""
             
-            async for chunk in response:
-                if chunk.choices[0].finish_reason == "stop":
-                    websocket_manager = state.get('websocket_manager')
-                    if websocket_manager and buffer:
-                        job_id = state.get('job_id')
-                        if job_id:
-                            await websocket_manager.send_status_update(
-                                job_id=job_id,
-                                status="report_chunk",
-                                message="Formatting final report",
-                                result={
-                                    "chunk": buffer,
-                                    "step": "Editor"
-                                }
-                            )
-                    break
-                    
-                chunk_text = chunk.choices[0].delta.content
-                if chunk_text:
-                    accumulated_text += chunk_text
-                    buffer += chunk_text
-                    
-                    if any(char in buffer for char in ['.', '!', '?', '\n']) and len(buffer) > 10:
-                        if websocket_manager := state.get('websocket_manager'):
-                            if job_id := state.get('job_id'):
-                                await websocket_manager.send_status_update(
-                                    job_id=job_id,
-                                    status="report_chunk",
-                                    message="Formatting final report",
-                                    result={
-                                        "chunk": buffer,
-                                        "step": "Editor"
-                                    }
-                                )
-                        buffer = ""
+            # Stream using LangChain's astream
+            async for chunk in chain.astream({
+                "company": self.context["company"],
+                "industry": self.context["industry"],
+                "hq_location": self.context["hq_location"],
+                "content": content
+            }):
+                accumulated_text += chunk
+                buffer += chunk
+                
+                # Yield chunks at sentence boundaries
+                if any(char in buffer for char in ['.', '!', '?', '\n']) and len(buffer) > 10:
+                    yield {"type": "report_chunk", "chunk": buffer, "step": "Editor"}
+                    buffer = ""
             
-            return (accumulated_text or "").strip()
+            # Yield final buffer
+            if buffer:
+                yield {"type": "report_chunk", "chunk": buffer, "step": "Editor"}
+            
+            yield accumulated_text.strip()
         except Exception as e:
             logger.error(f"Error in formatting: {e}")
-            return (content or "").strip()
+            yield {"type": "error", "error": str(e), "step": "Editor"}
+            yield content or ""
 
     async def run(self, state: ResearchState) -> ResearchState:
         state = await self.compile_briefings(state)

@@ -5,29 +5,18 @@ from urllib.parse import urljoin, urlparse
 from langchain_core.messages import AIMessage
 
 from ..classes import ResearchState
+from ..classes.state import job_status
 from ..utils.references import process_references_from_search_results
 
 logger = logging.getLogger(__name__)
 
 class Curator:
     def __init__(self) -> None:
-        self.relevance_threshold = 0.4  # Fixed initialization of class attribute
-        logger.info("Curator initialized with relevance threshold: {relevance_threshhold}")
+        self.relevance_threshold = 0.4
+        logger.info(f"Curator initialized with relevance threshold: {self.relevance_threshold}")
 
-    async def evaluate_documents(self, state: ResearchState, docs: list, context: Dict[str, str]) -> list:
+    def evaluate_documents(self, docs: list, context: Dict[str, str]) -> list:
         """Evaluate documents based on Tavily's scoring."""
-        if websocket_manager := state.get('websocket_manager'):
-            if job_id := state.get('job_id'):
-                logger.info(f"Sending initial curation status update for job {job_id}")
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="processing",
-                    message="Evaluating documents",
-                    result={
-                        "step": "Curation",
-                    }
-                )
-        
         if not docs:
             return []
 
@@ -57,21 +46,6 @@ class Curator:
                             }
                         }
                         evaluated_docs.append(evaluated_doc)
-                        
-                        # Send incremental update for kept document
-                        if websocket_manager := state.get('websocket_manager'):
-                            if job_id := state.get('job_id'):
-                                await websocket_manager.send_status_update(
-                                    job_id=job_id,
-                                    status="document_kept",
-                                    message=f"Kept document: {doc.get('title', 'No title')}",
-                                    result={
-                                        "step": "Curation",
-                                        "doc_type": doc.get('doc_type', 'unknown'),
-                                        "title": doc.get('title', 'No title'),
-                                        "score": tavily_score
-                                    }
-                                )
                     else:
                         logger.info(f"Document below threshold with score {tavily_score:.4f} for '{doc.get('title', 'No title')}'")
                 except (ValueError, TypeError) as e:
@@ -91,26 +65,8 @@ class Curator:
     async def curate_data(self, state: ResearchState) -> ResearchState:
         """Curate all collected data based on Tavily scores."""
         company = state.get('company', 'Unknown Company')
-        logger.info(f"Starting curation for company: {company}")
-        
-        # Send initial status update through WebSocket
-        if websocket_manager := state.get('websocket_manager'):
-            if job_id := state.get('job_id'):
-                logger.info(f"Sending initial curation status update for job {job_id}")
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="processing",
-                    message=f"Starting document curation for {company}",
-                    result={
-                        "step": "Curation",
-                        "doc_counts": {
-                            "company": {"initial": 0, "kept": 0},
-                            "industry": {"initial": 0, "kept": 0},
-                            "financial": {"initial": 0, "kept": 0},
-                            "news": {"initial": 0, "kept": 0}
-                        }
-                    }
-                )
+        job_id = state.get('job_id')
+        logger.info(f"Starting curation for company: {company}, job_id={job_id}")
 
         industry = state.get('industry', 'Unknown')
         context = {
@@ -128,8 +84,7 @@ class Curator:
             'company_data': ('🏢 Company', 'company')
         }
 
-        # Create all evaluation tasks upfront
-        curation_tasks = []
+        # Process each data type
         for data_field, (emoji, doc_type) in data_types.items():
             data = state.get(data_field, {})
             if not data:
@@ -151,47 +106,35 @@ class Curator:
                     continue
 
             docs = list(unique_docs.values())
-            curation_tasks.append((data_field, emoji, doc_type, unique_docs.keys(), docs))
-
-        # Track document counts for each type
-        doc_counts = {}
-
-        for data_field, emoji, doc_type, urls, docs in curation_tasks:
             msg.append(f"\n{emoji}: Found {len(docs)} documents")
-
-            if websocket_manager := state.get('websocket_manager'):
-                if job_id := state.get('job_id'):
-                    await websocket_manager.send_status_update(
-                        job_id=job_id,
-                        status="category_start",
-                        message=f"Processing {doc_type} documents",
-                        result={
-                            "step": "Curation",
-                            "doc_type": doc_type,
-                            "initial_count": len(docs)
-                        }
-                    )
-
-            evaluated_docs = await self.evaluate_documents(state, docs, context)
+            
+            evaluated_docs = self.evaluate_documents(docs, context)
+            
+            # Emit curation event with total count
+            if job_id:
+                try:
+                    if job_id in job_status:
+                        job_status[job_id]["events"].append({
+                            "type": "curation",
+                            "category": doc_type,
+                            "total": len(evaluated_docs) if evaluated_docs else 0,
+                            "message": f"Curating {doc_type} documents"
+                        })
+                except Exception as e:
+                    logger.error(f"Error appending curation event: {e}")
 
             if not evaluated_docs:
                 msg.append("  ⚠️ No relevant documents found")
-                doc_counts[data_field] = {"initial": len(docs), "kept": 0}
                 continue
 
             # Filter and sort by Tavily score
-            relevant_docs = {url: doc for url, doc in zip(urls, evaluated_docs)}
+            relevant_docs = {doc['url']: doc for doc in evaluated_docs}
             sorted_items = sorted(relevant_docs.items(), key=lambda item: item[1]['evaluation']['overall_score'], reverse=True)
             
             # Limit to top 30 documents per category
             if len(sorted_items) > 30:
                 sorted_items = sorted_items[:30]
             relevant_docs = dict(sorted_items)
-
-            doc_counts[data_field] = {
-                "initial": len(docs),
-                "kept": len(relevant_docs)
-            }
 
             if relevant_docs:
                 msg.append(f"  ✓ Kept {len(relevant_docs)} relevant documents")
@@ -208,30 +151,10 @@ class Curator:
         logger.info(f"Selected top {len(top_reference_urls)} references for the report")
         
         # Update state with references and their titles
-        messages = state.get('messages', [])
-        messages.append(AIMessage(content="\n".join(msg)))
-        state['messages'] = messages
+        state.setdefault('messages', []).append(AIMessage(content="\n".join(msg)))
         state['references'] = top_reference_urls
         state['reference_titles'] = reference_titles
         state['reference_info'] = reference_info
-
-        # Send final curation stats
-        if websocket_manager := state.get('websocket_manager'):
-            if job_id := state.get('job_id'):
-                await websocket_manager.send_status_update(
-                    job_id=job_id,
-                    status="curation_complete",
-                    message="Document curation complete",
-                    result={
-                        "step": "Curation",
-                        "doc_counts": {
-                            "company": doc_counts.get('company_data', {"initial": 0, "kept": 0}),
-                            "industry": doc_counts.get('industry_data', {"initial": 0, "kept": 0}),
-                            "financial": doc_counts.get('financial_data', {"initial": 0, "kept": 0}),
-                            "news": doc_counts.get('news_data', {"initial": 0, "kept": 0})
-                        }
-                    }
-                )
 
         return state
 

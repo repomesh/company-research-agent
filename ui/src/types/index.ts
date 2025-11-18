@@ -10,15 +10,6 @@ export type ResearchOutput = {
   };
 };
 
-export type DocCount = {
-  initial: number;
-  kept: number;
-};
-
-export type DocCounts = {
-  [key: string]: DocCount;
-};
-
 export type EnrichmentCounts = {
   company: { total: number; enriched: number };
   industry: { total: number; enriched: number };
@@ -26,9 +17,29 @@ export type EnrichmentCounts = {
   news: { total: number; enriched: number };
 };
 
-export type ResearchState = {
-  status: string;
-  message: string;
+export type GlassStyle = {
+  base: string;
+  card: string;
+  input: string;
+};
+
+export type AnimationStyle = {
+  fadeIn: string;
+  writing: string;
+};
+
+export type ResearchStatusProps = {
+  status: ResearchStatusType | null;
+  error: string | null;
+  isComplete: boolean;
+  currentPhase: 'search' | 'enrichment' | 'briefing' | 'complete' | null;
+  isResetting: boolean;
+  glassStyle: GlassStyle;
+  loaderColor: string;
+  statusRef: React.RefObject<HTMLDivElement>;
+};
+
+export type ResearchQueriesProps = {
   queries: Array<{
     text: string;
     number: number;
@@ -42,35 +53,8 @@ export type ResearchState = {
       isComplete: boolean;
     };
   };
-  briefingStatus: {
-    company: boolean;
-    industry: boolean;
-    financial: boolean;
-    news: boolean;
-  };
-  enrichmentCounts?: EnrichmentCounts;
-  docCounts?: DocCounts;
-};
-
-export type GlassStyle = {
-  base: string;
-  card: string;
-  input: string;
-};
-
-export type AnimationStyle = {
-  fadeIn: string;
-  writing: string;
-  colorTransition: string;
-};
-
-export type ResearchStatusProps = {
-  status: ResearchStatusType | null;
-  error: string | null;
-  isComplete: boolean;
-  currentPhase: 'search' | 'enrichment' | 'briefing' | 'complete' | null;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   isResetting: boolean;
-  glassStyle: GlassStyle;
-  loaderColor: string;
-  statusRef: React.RefObject<HTMLDivElement>;
+  glassStyle: string;
 }; 

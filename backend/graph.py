@@ -21,25 +21,20 @@ from .nodes.researchers import (
 logger = logging.getLogger(__name__)
 
 class Graph:
-    def __init__(self, company=None, url=None, hq_location=None, industry=None,
-                 websocket_manager=None, job_id=None):
-        self.websocket_manager = websocket_manager
-        self.job_id = job_id
-        
+    def __init__(self, company=None, url=None, hq_location=None, industry=None, job_id=None):
         # Initialize InputState
         self.input_state = InputState(
             company=company,
             company_url=url,
             hq_location=hq_location,
             industry=industry,
-            websocket_manager=websocket_manager,
             job_id=job_id,
             messages=[
                 SystemMessage(content="Expert researcher starting investigation")
             ]
         )
 
-        # Initialize nodes with WebSocket manager and job ID
+        # Initialize nodes
         self._init_nodes()
         self._build_workflow()
 
@@ -102,24 +97,7 @@ class Graph:
             self.input_state,
             thread
         ):
-            if self.websocket_manager and self.job_id:
-                await self._handle_ws_update(state)
             yield state
-
-    async def _handle_ws_update(self, state: Dict[str, Any]):
-        """Handle WebSocket updates based on state changes"""
-        update = {
-            "type": "state_update",
-            "data": {
-                "current_node": state.get("current_node", "unknown"),
-                "progress": state.get("progress", 0),
-                "keys": list(state.keys())
-            }
-        }
-        await self.websocket_manager.broadcast_to_job(
-            self.job_id,
-            update
-        )
     
     def compile(self):
         graph = self.workflow.compile()

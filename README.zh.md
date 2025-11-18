@@ -1,9 +1,9 @@
- [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.md)
-[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.zh.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.fr.md)
-[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.es.md)
-[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.jp.md)
-[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.kr.md)
+ [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.md)
+[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.zh.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.fr.md)
+[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.es.md)
+[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.jp.md)
+[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.kr.md)
 
 
 # 智能公司研究助手 🔍
@@ -20,11 +20,11 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
 
 - **多源研究**：从公司网站、新闻文章、财务报告和行业分析等多个来源收集数据
 - **AI驱动的内容过滤**：使用Tavily的相关性评分进行内容筛选
-- **实时进度流**：使用WebSocket连接流式传输研究进度和结果
+- **异步处理**：基于轮询的高效架构，用于跟踪研究进度
 - **双模型架构**：
-  - Gemini 2.0 Flash用于高上下文研究综合
-  - GPT-4.1用于精确的报告格式化和编辑
-- **现代React前端**：具有实时更新、进度跟踪和下载选项的响应式UI
+  - Gemini 2.5 Flash用于高上下文研究综合
+  - GPT-5.1用于精确的报告格式化和编辑
+- **现代React前端**：具有进度跟踪和下载选项的响应式UI
 - **模块化架构**：使用专业研究和处理节点构建的管道
 
 ## 智能体框架
@@ -42,8 +42,8 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
 2. **处理节点**：
    - `Collector`：汇总所有分析器的研究数据
    - `Curator`：实现内容过滤和相关性评分
-   - `Briefing`：使用Gemini 2.0 Flash生成特定类别的摘要
-   - `Editor`：使用GPT-4.1-mini将简报编译和格式化为最终报告
+   - `Briefing`：使用Gemini 2.5 Flash生成特定类别的摘要
+   - `Editor`：使用GPT-5.1将简报编译和格式化为最终报告
 
    ![web ui](<static/agent-flow.png>)
 
@@ -51,13 +51,13 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
 
 该平台利用不同的模型以获得最佳性能：
 
-1. **Gemini 2.0 Flash**（`briefing.py`）：
+1. **Gemini 2.5 Flash**（`briefing.py`）：
    - 处理高上下文研究综合任务
    - 擅长处理和总结大量数据
    - 用于生成初始类别简报
    - 在多个文档之间高效维护上下文
 
-2. **GPT-4.1 mini**（`editor.py`）：
+2. **GPT-5.1**（`editor.py`）：
    - 专注于精确的格式化和编辑任务
    - 处理markdown结构和一致性
    - 在遵循精确格式说明方面表现出色
@@ -67,7 +67,7 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
      - Markdown格式化
      - 实时报告流式传输
 
-这种方法结合了Gemini处理大上下文窗口的优势和GPT-4.1-mini在遵循特定格式说明方面的精确性。
+这种方法结合了Gemini处理大上下文窗口的优势和GPT-5.1在遵循特定格式说明方面的精确性。
 
 ### 内容筛选系统
 
@@ -83,46 +83,30 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
    - 内容被标准化和清理
    - URL被去重和标准化
    - 文档按相关性分数排序
-   - 通过WebSocket发送实时进度更新
+   - 研究在后台异步运行
 
-### 实时通信系统
+### 后端架构
 
-该平台实现了基于WebSocket的实时通信系统：
+该平台实现了基于轮询的简单通信系统：
 
 ![web ui](<static/ui-2.png>)
 
 1. **后端实现**：
-   - 使用FastAPI的WebSocket支持
-   - 为每个研究任务维护持久连接
-   - 发送各种事件的结构化状态更新：
-     ```python
-     await websocket_manager.send_status_update(
-         job_id=job_id,
-         status="processing",
-         message=f"Generating {category} briefing",
-         result={
-             "step": "Briefing",
-             "category": category,
-             "total_docs": len(docs)
-         }
-     )
-     ```
-
+   - 使用带有异步支持的FastAPI
+   - 研究任务在后台运行
+   - 结果通过REST端点存储和访问
+   - 简单的作业状态跟踪
+   
 2. **前端集成**：
-   - React组件订阅WebSocket更新
-   - 实时处理和显示更新
-   - 不同的UI组件处理特定类型的更新：
-     - 查询生成进度
-     - 文档筛选统计
-     - 简报完成状态
-     - 报告生成进度
+   - React前端提交研究请求
+   - 接收用于跟踪的job_id
+   - 轮询`/research/{job_id}/report`端点
+   - 完成时显示最终报告
 
-3. **状态类型**：
-   - `query_generating`：实时查询创建更新
-   - `document_kept`：文档筛选进度
-   - `briefing_start/complete`：简报生成状态
-   - `report_chunk`：流式报告生成
-   - `curation_complete`：最终文档统计
+3. **API端点**：
+   - `POST /research`：提交新的研究请求
+   - `GET /research/{job_id}/report`：轮询已完成的报告
+   - `POST /generate-pdf`：从报告内容生成PDF
 
 ## 安装设置
 
@@ -132,7 +116,7 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -170,7 +154,7 @@ chmod +x setup.sh
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -228,7 +212,6 @@ cp ui/.env.development.example ui/.env
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
@@ -238,7 +221,7 @@ VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -271,7 +254,6 @@ cp ui/.env.development.example ui/.env
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
@@ -340,7 +322,6 @@ npm run dev
 
    后端将在以下位置可用：
    - API端点：`http://localhost:8000`
-   - WebSocket端点：`ws://localhost:8000/research/ws/{job_id}`
 
 2. 启动前端开发服务器：
    ```bash

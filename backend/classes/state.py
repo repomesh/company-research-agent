@@ -1,5 +1,6 @@
 from typing import TypedDict, NotRequired, Required, Dict, List, Any
-from backend.services.websocket_manager import WebSocketManager
+from collections import defaultdict
+from datetime import datetime
 
 #Define the input state
 class InputState(TypedDict, total=False):
@@ -7,7 +8,6 @@ class InputState(TypedDict, total=False):
     company_url: NotRequired[str]
     hq_location: NotRequired[str]
     industry: NotRequired[str]
-    websocket_manager: NotRequired[WebSocketManager]
     job_id: NotRequired[str]
 
 class ResearchState(InputState):
@@ -28,3 +28,15 @@ class ResearchState(InputState):
     references: List[str]
     briefings: Dict[str, Any]
     report: str
+
+# Global job status tracker - shared across application.py and backend nodes
+job_status = defaultdict[Any, dict[str, str | list[Any] | None]](lambda: {
+    "status": "pending",
+    "result": None,
+    "error": None,
+    "debug_info": [],
+    "company": None,
+    "report": None,
+    "last_update": datetime.now().isoformat(),
+    "events": []  # Queue for events from parallel nodes
+})

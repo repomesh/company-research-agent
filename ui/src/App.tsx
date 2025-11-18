@@ -1,32 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import Header from './components/Header';
-import ResearchBriefings from './components/ResearchBriefings';
-import CurationExtraction from './components/CurationExtraction';
-import ResearchQueries from './components/ResearchQueries';
-import ResearchStatus from './components/ResearchStatus';
-import ResearchReport from './components/ResearchReport';
-import ResearchForm from './components/ResearchForm';
-import {ResearchOutput, DocCount,DocCounts, EnrichmentCounts, ResearchState, ResearchStatusType} from './types';
-import { checkForFinalReport } from './utils/handlers';
-import { colorAnimation, dmSansStyle, glassStyle, fadeInAnimation } from './styles';
+import {
+  Header,
+  ResearchStatus,
+  ResearchReport,
+  ResearchForm,
+  ResearchQueries,
+  CurationExtraction,
+  ResearchBriefings
+} from './components';
+import type { ResearchOutput, ResearchStatusType } from './types';
+import { glassStyle, fadeInAnimation } from './styles';
 
-const API_URL = import.meta.env.VITE_API_URL;
-const WS_URL = import.meta.env.VITE_WS_URL;
-
-if (!API_URL || !WS_URL) {
-  throw new Error(
-    "Environment variables VITE_API_URL and VITE_WS_URL must be set"
-  );
-}
-
-// Add styles to document head
-const colorStyle = document.createElement('style');
-colorStyle.textContent = colorAnimation;
-document.head.appendChild(colorStyle);
-
-const dmSansStyleElement = document.createElement('style');
-dmSansStyleElement.textContent = dmSansStyle;
-document.head.appendChild(dmSansStyleElement);
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function App() {
 
@@ -34,67 +19,47 @@ function App() {
   const [status, setStatus] = useState<ResearchStatusType | null>(null);
   const [output, setOutput] = useState<ResearchOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const [isComplete, setIsComplete] = useState(false);
-  const [hasFinalReport, setHasFinalReport] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const maxReconnectAttempts = 3;
-  const reconnectDelay = 2000; // 2 seconds
-  const [researchState, setResearchState] = useState<ResearchState>({
-    status: "idle",
-    message: "",
-    queries: [],
-    streamingQueries: {},
-    briefingStatus: {
-      company: false,
-      industry: false,
-      financial: false,
-      news: false
-    }
-  });
+  const eventSourceRef = useRef<EventSource | null>(null);
   const [originalCompanyName, setOriginalCompanyName] = useState<string>("");
-
-  // Add ref for status section
+  const [currentPhase, setCurrentPhase] = useState<'search' | 'enrichment' | 'briefing' | 'complete' | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
-
-  // Add state to track initial scroll
+  const [queries, setQueries] = useState<Array<{ text: string; number: number; category: string }>>([]);
+  const [streamingQueries, setStreamingQueries] = useState<Record<string, { text: string; number: number; category: string; isComplete: boolean }>>({});
+  const [isQueriesExpanded, setIsQueriesExpanded] = useState(true);
+  const [enrichmentCounts, setEnrichmentCounts] = useState<{
+    company: { total: number; enriched: number };
+    industry: { total: number; enriched: number };
+    financial: { total: number; enriched: number };
+    news: { total: number; enriched: number };
+  } | undefined>(undefined);
+  const [briefingStatus, setBriefingStatus] = useState({
+    company: false,
+    industry: false,
+    financial: false,
+    news: false
+  });
+  const [isEnrichmentExpanded, setIsEnrichmentExpanded] = useState(true);
+  const [isBriefingExpanded, setIsBriefingExpanded] = useState(true);
   const [hasScrolledToStatus, setHasScrolledToStatus] = useState(false);
+  const [isReportStreaming, setIsReportStreaming] = useState(false);
 
-  // Modify the scroll helper function
+  // Add new state for color cycling
+  const [loaderColor, setLoaderColor] = useState("#468BFF");
+  
+  // Scroll helper function
   const scrollToStatus = () => {
     if (!hasScrolledToStatus && statusRef.current) {
-      const yOffset = -20; // Reduced negative offset to scroll further down
+      const yOffset = -20;
       const y = statusRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
       setHasScrolledToStatus(true);
     }
   };
 
-  // Add new state for query section collapse
-  const [isQueriesExpanded, setIsQueriesExpanded] = useState(true);
-  const [shouldShowQueries, setShouldShowQueries] = useState(false);
-  
-  // Add new state for tracking search phase
-  const [isSearchPhase, setIsSearchPhase] = useState(false);
-
-  // Add state for section collapse
-  const [isBriefingExpanded, setIsBriefingExpanded] = useState(true);
-  const [isEnrichmentExpanded, setIsEnrichmentExpanded] = useState(true);
-
-  // Add state for phase tracking
-  const [currentPhase, setCurrentPhase] = useState<'search' | 'enrichment' | 'briefing' | 'complete' | null>(null);
-
-  // Add new state for PDF generation
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [, setPdfUrl] = useState<string | null>(null);
-
-  const [isResetting, setIsResetting] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-
-  // Add new state for color cycling
-  const [loaderColor, setLoaderColor] = useState("#468BFF");
-  
   // Add useEffect for color cycling
   useEffect(() => {
     if (!isResearching) return;
@@ -127,456 +92,262 @@ function App() {
       setOutput(null);
       setError(null);
       setIsComplete(false);
-      setResearchState({
-        status: "idle",
-        message: "",
-        queries: [],
-        streamingQueries: {},
-        briefingStatus: {
-          company: false,
-          industry: false,
-          financial: false,
-          news: false
-        }
-      });
-      setPdfUrl(null);
       setCurrentPhase(null);
-      setIsSearchPhase(false);
-      setShouldShowQueries(false);
+      setQueries([]);
+      setStreamingQueries({});
+      setEnrichmentCounts(undefined);
+      setBriefingStatus({
+        company: false,
+        industry: false,
+        financial: false,
+        news: false
+      });
       setIsQueriesExpanded(true);
-      setIsBriefingExpanded(true);
       setIsEnrichmentExpanded(true);
+      setIsBriefingExpanded(true);
+      setHasScrolledToStatus(false);
+      setIsReportStreaming(false);
       setIsResetting(false);
-      setHasScrolledToStatus(false); // Reset scroll flag when resetting research
-    }, 300); // Match this with CSS transition duration
+    }, 300);
   };
 
-  const connectWebSocket = (jobId: string) => {
-    console.log("Initializing WebSocket connection for job:", jobId);
-    
-    // Use the WS_URL directly if it's a full URL, otherwise construct it
-    const wsUrl = WS_URL.startsWith('wss://') || WS_URL.startsWith('ws://')
-      ? `${WS_URL}/research/ws/${jobId}`
-      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${WS_URL}/research/ws/${jobId}`;
-    
-    console.log("Connecting to WebSocket URL:", wsUrl);
-    
-    const ws = new WebSocket(wsUrl);
+  // Stream research results via SSE
+  const streamResults = (jobId: string) => {
+    const eventSource = new EventSource(`${API_URL}/research/${jobId}/stream`);
+    eventSourceRef.current = eventSource;
 
-    ws.onopen = () => {
-      console.log("WebSocket connection established for job:", jobId);
-      setReconnectAttempts(0);
-    };
-
-    ws.onclose = (event) => {
-      console.log("WebSocket disconnected", {
-        jobId,
-        code: event.code,
-        reason: event.reason,
-        wasClean: event.wasClean,
-        timestamp: new Date().toISOString()
-      });
-
-      if (isResearching && !hasFinalReport) {
-        // Start polling for final report
-        if (!pollingIntervalRef.current) {
-          pollingIntervalRef.current = setInterval(() => checkForFinalReport(
-            jobId,
-            setOutput,
-            setStatus,
-            setIsComplete,
-            setIsResearching,
-            setCurrentPhase,
-            setHasFinalReport,
-            pollingIntervalRef
-          ), 5000);
-        }
-
-        // Attempt reconnection if we haven't exceeded max attempts
-        if (reconnectAttempts < maxReconnectAttempts) {
-          console.log(`Attempting to reconnect (${reconnectAttempts + 1}/${maxReconnectAttempts})...`);
-          setTimeout(() => {
-            setReconnectAttempts(prev => prev + 1);
-            connectWebSocket(jobId);
-          }, reconnectDelay);
-        } else {
-          console.log("Max reconnection attempts reached");
-          setError("Connection lost. Checking for final report...");
-          // Keep polling for final report
-        }
-      } else if (isResearching) {
-        setError("Research connection lost. Please try again.");
-        setIsResearching(false);
-      }
-    };
-
-    ws.onerror = (event) => {
-      console.error("WebSocket error:", {
-        jobId,
-        error: event,
-        timestamp: new Date().toISOString(),
-        readyState: ws.readyState,
-        url: wsUrl
-      });
-      setError("WebSocket connection error");
-      setIsResearching(false);
-    };
-
-    ws.onmessage = (event) => {
-      const rawData = JSON.parse(event.data);
-
-      if (rawData.type === "status_update") {
-        const statusData = rawData.data;
-
-        // Handle phase transitions
-        if (statusData.result?.step) {
-          const step = statusData.result.step;
-          if (step === "Search" && currentPhase !== 'search') {
-            setCurrentPhase('search');
-            setIsSearchPhase(true);
-            setShouldShowQueries(true);
-            setIsQueriesExpanded(true);
-          } else if (step === "Enriching" && currentPhase !== 'enrichment') {
-            setCurrentPhase('enrichment');
-            setIsSearchPhase(false);
-            setIsQueriesExpanded(false);
-            setIsEnrichmentExpanded(true);
-          } else if (step === "Briefing" && currentPhase !== 'briefing') {
-            setCurrentPhase('briefing');
-            setIsEnrichmentExpanded(false);
-            setIsBriefingExpanded(true);
-          }
-        }
-
-        // Handle completion
-        if (statusData.status === "completed") {
-          setCurrentPhase('complete');
-          setIsComplete(true);
-          setIsResearching(false);
-          setStatus({
-            step: "Complete",
-            message: "Research completed successfully"
-          });
-          setOutput({
-            summary: "",
-            details: {
-              report: statusData.result.report,
-            },
-          });
-          setHasFinalReport(true);
-          
-          // Clear polling interval if it exists
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-        }
-
-        // Set search phase when first query starts generating
-        if (statusData.status === "query_generating" && !isSearchPhase) {
-          setIsSearchPhase(true);
-          setShouldShowQueries(true);
-          setIsQueriesExpanded(true);
-        }
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
         
-        // End search phase and start enrichment when moving to next step
-        if (statusData.result?.step && statusData.result.step !== "Search") {
-          if (isSearchPhase) {
-            setIsSearchPhase(false);
-            // Add delay before collapsing queries
-            setTimeout(() => {
-              setIsQueriesExpanded(false);
-            }, 1000);
-          }
-          
-          // Handle enrichment phase
-          if (statusData.result.step === "Enriching") {
-            setIsEnrichmentExpanded(true);
-            // Collapse enrichment section when complete
-            if (statusData.status === "enrichment_complete") {
-              setTimeout(() => {
-                setIsEnrichmentExpanded(false);
-              }, 1000);
-            }
-          }
-          
-          // Handle briefing phase
-          if (statusData.result.step === "Briefing") {
-            setIsBriefingExpanded(true);
-            if (statusData.status === "briefing_complete" && statusData.result?.category) {
-              // Update briefing status
-              setResearchState((prev) => {
-                const newBriefingStatus = {
-                  ...prev.briefingStatus,
-                  [statusData.result.category]: true
-                };
-                
-                // Check if all briefings are complete
-                const allBriefingsComplete = Object.values(newBriefingStatus).every(status => status);
-                
-                // Only collapse when all briefings are complete
-                if (allBriefingsComplete) {
-                  setTimeout(() => {
-                    setIsBriefingExpanded(false);
-                  }, 2000);
-                }
-                
-                return {
-                  ...prev,
-                  briefingStatus: newBriefingStatus
-                };
-              });
-            }
-          }
-        }
+        // Helper function to map node names to user-friendly step names
+        const getStepName = (nodeName: string): string => {
+          const stepMap: Record<string, string> = {
+            'grounding': 'Search',
+            'financial_analyst': 'Search',
+            'news_scanner': 'Search',
+            'industry_analyst': 'Search',
+            'company_analyst': 'Search',
+            'collector': 'Search',
+            'curator': 'Enriching',
+            'enricher': 'Enriching',
+            'briefing': 'Briefing',
+            'editor': 'Finalizing'
+          };
+          return stepMap[nodeName] || nodeName;
+        };
 
-        // Handle enrichment-specific updates
-        if (statusData.result?.step === "Enriching") {
-          
-          // Initialize enrichment counts when starting a category
-          if (statusData.status === "category_start") {
-            const category = statusData.result.category as keyof EnrichmentCounts;
-            if (category) {
-              setResearchState((prev) => ({
-                ...prev,
-                enrichmentCounts: {
-                  ...prev.enrichmentCounts,
-                  [category]: {
-                    total: statusData.result.count || 0,
-                    enriched: 0
-                  }
-                } as EnrichmentCounts
-              }));
-            }
-          }
-          // Update enriched count when a document is processed
-          else if (statusData.status === "extracted") {
-            const category = statusData.result.category as keyof EnrichmentCounts;
-            if (category) {
-              setResearchState((prev) => {
-                const currentCounts = prev.enrichmentCounts?.[category];
-                if (currentCounts) {
-                  return {
-                    ...prev,
-                    enrichmentCounts: {
-                      ...prev.enrichmentCounts,
-                      [category]: {
-                        ...currentCounts,
-                        enriched: Math.min(currentCounts.enriched + 1, currentCounts.total)
-                      }
-                    } as EnrichmentCounts
-                  };
-                }
-                return prev;
-              });
-            }
-          }
-          // Handle extraction errors
-          else if (statusData.status === "extraction_error") {
-            const category = statusData.result.category as keyof EnrichmentCounts;
-            if (category) {
-              setResearchState((prev) => {
-                const currentCounts = prev.enrichmentCounts?.[category];
-                if (currentCounts) {
-                  return {
-                    ...prev,
-                    enrichmentCounts: {
-                      ...prev.enrichmentCounts,
-                      [category]: {
-                        ...currentCounts,
-                        total: Math.max(0, currentCounts.total - 1)
-                      }
-                    } as EnrichmentCounts
-                  };
-                }
-                return prev;
-              });
-            }
-          }
-          // Update final counts when a category is complete
-          else if (statusData.status === "category_complete") {
-            const category = statusData.result.category as keyof EnrichmentCounts;
-            if (category) {
-              setResearchState((prev) => ({
-                ...prev,
-                enrichmentCounts: {
-                  ...prev.enrichmentCounts,
-                  [category]: {
-                    total: statusData.result.total || 0,
-                    enriched: statusData.result.enriched || 0
-                  }
-                } as EnrichmentCounts
-              }));
-            }
-          }
-        }
-
-        // Handle curation-specific updates
-        if (statusData.result?.step === "Curation") {
-          
-          // Initialize doc counts when curation starts
-          if (statusData.status === "processing" && statusData.result.doc_counts) {
-            setResearchState((prev) => ({
-              ...prev,
-              docCounts: statusData.result.doc_counts as DocCounts
-            }));
-          }
-          // Update initial count for a category
-          else if (statusData.status === "category_start") {
-            const docType = statusData.result?.doc_type as keyof DocCounts;
-            if (docType) {
-              setResearchState((prev) => ({
-                ...prev,
-                docCounts: {
-                  ...prev.docCounts,
-                  [docType]: {
-                    initial: statusData.result.initial_count,
-                    kept: 0
-                  } as DocCount
-                } as DocCounts
-              }));
-            }
-          }
-          // Increment the kept count for a specific category
-          else if (statusData.status === "document_kept") {
-            const docType = statusData.result?.doc_type as keyof DocCounts;
-            setResearchState((prev) => {
-              if (docType && prev.docCounts?.[docType]) {
-                return {
-                  ...prev,
-                  docCounts: {
-                    ...prev.docCounts,
-                    [docType]: {
-                      initial: prev.docCounts[docType].initial,
-                      kept: prev.docCounts[docType].kept + 1
-                    }
-                  } as DocCounts
-                };
-              }
-              return prev;
-            });
-          }
-          // Update final doc counts when curation is complete
-          else if (statusData.status === "curation_complete" && statusData.result.doc_counts) {
-            setResearchState((prev) => ({
-              ...prev,
-              docCounts: statusData.result.doc_counts as DocCounts
-            }));
-          }
-        }
-
-        // Handle briefing status updates
-        if (statusData.status === "briefing_start") {
+        // Handle progress events from backend (node transitions)
+        if (data.type === 'progress' && data.step) {
+          const stepName = getStepName(data.step);
           setStatus({
-            step: "Briefing",
-            message: statusData.message
+            step: stepName,
+            message: `Processing ${data.step}...`
           });
-        } else if (statusData.status === "briefing_complete" && statusData.result?.category) {
-          const category = statusData.result.category;
-          setResearchState((prev) => ({
-            ...prev,
-            briefingStatus: {
-              ...prev.briefingStatus,
-              [category]: true
-            }
-          }));
-        }
-
-        // Handle query updates
-        if (statusData.status === "query_generating") {
-          setResearchState((prev) => {
-            const key = `${statusData.result.category}-${statusData.result.query_number}`;
-            return {
-              ...prev,
-              streamingQueries: {
-                ...prev.streamingQueries,
-                [key]: {
-                  text: statusData.result.query,
-                  number: statusData.result.query_number,
-                  category: statusData.result.category,
-                  isComplete: false
-                }
-              }
-            };
-          });
-        } else if (statusData.status === "query_generated") {
-          setResearchState((prev) => {
-            // Remove from streaming queries and add to completed queries
-            const key = `${statusData.result.category}-${statusData.result.query_number}`;
-            const { [key]: _, ...remainingStreamingQueries } = prev.streamingQueries;
-            
-            return {
-              ...prev,
-              streamingQueries: remainingStreamingQueries,
-              queries: [
-                ...prev.queries,
-                {
-                  text: statusData.result.query,
-                  number: statusData.result.query_number,
-                  category: statusData.result.category,
-                },
-              ],
-            };
-          });
-        }
-        // Handle report streaming
-        else if (statusData.status === "report_chunk") {
-          setOutput((prev) => ({
-            summary: "Generating report...",
-            details: {
-              report: prev?.details?.report
-                ? prev.details.report + statusData.result.chunk
-                : statusData.result.chunk,
-            },
-          }));
-        }
-        // Handle other status updates
-        else if (statusData.status === "processing") {
-          setIsComplete(false);
-          // Only update status.step if we're not in curation or the new step is curation
-          if (!status?.step || status.step !== "Curation" || statusData.result?.step === "Curation") {
-            setStatus({
-              step: statusData.result?.step || "Processing",
-              message: statusData.message || "Processing...",
-            });
-          }
           
-          // Reset briefing status when starting a new research
-          if (statusData.result?.step === "Briefing") {
-            setResearchState((prev) => ({
-              ...prev,
-              briefingStatus: {
-                company: false,
-                industry: false,
-                financial: false,
-                news: false
-              }
-            }));
+          // Update phase based on step
+          if (['grounding', 'financial_analyst', 'news_scanner', 'industry_analyst', 'company_analyst', 'collector'].includes(data.step)) {
+            setCurrentPhase('search');
+          } else if (['curator', 'enricher'].includes(data.step)) {
+            setCurrentPhase('enrichment');
+          } else if (data.step === 'briefing') {
+            setCurrentPhase('briefing');
           }
           
           scrollToStatus();
-        } else if (
-          statusData.status === "failed" ||
-          statusData.status === "error" ||
-          statusData.status === "website_error"
-        ) {
-          setError(statusData.error || statusData.message || "Research failed");
-          if (statusData.status === "website_error" && statusData.result?.continue_research) {
-          } else {
-            setIsResearching(false);
-            setIsComplete(false);
-          }
         }
+        
+        // Direct event-to-phase mapping
+        if (data.type === 'query_generating') {
+          // Show query being generated and update streaming queries
+          setCurrentPhase('search');
+          setStatus({
+            step: 'Search',
+            message: `Query ${data.query_number}: ${data.query}`
+          });
+          // Update streaming queries with current partial query
+          const key = `${data.category}_${data.query_number}`;
+          setStreamingQueries(prev => ({
+            ...prev,
+            [key]: {
+              text: data.query,
+              number: data.query_number,
+              category: data.category,
+              isComplete: false
+            }
+          }));
+        } else if (data.type === 'query_generated') {
+          // Show completed query and move to queries list
+          setCurrentPhase('search');
+          setStatus({
+            step: 'Search',
+            message: `Generated: ${data.query}`
+          });
+          // Add to completed queries
+          setQueries(prev => [...prev, {
+            text: data.query,
+            number: data.query_number,
+            category: data.category
+          }]);
+          // Remove from streaming queries
+          const key = `${data.category}_${data.query_number}`;
+          setStreamingQueries(prev => {
+            const updated = { ...prev };
+            delete updated[key];
+            return updated;
+          });
+          scrollToStatus();
+        } else if (data.type === 'research_init') {
+          // Show research initialization
+          setCurrentPhase('search');
+          setStatus({
+            step: 'Initializing',
+            message: data.message || `Initiating research for ${data.company}`
+          });
+        } else if (data.type === 'crawl_start') {
+          // Show website crawl starting
+          setCurrentPhase('search');
+          setStatus({
+            step: 'Website Crawl',
+            message: data.message || 'Crawling company website'
+          });
+        } else if (data.type === 'curation') {
+          // Show curation progress - transition to enrichment phase
+          setCurrentPhase('enrichment');
+          setStatus({
+            step: 'Curating data',
+            message: data.message || `Curating ${data.category} documents`
+          });
+          // Initialize enrichment counts when curation starts for a category
+          if (data.category) {
+            setEnrichmentCounts(prev => ({
+              ...prev,
+              [data.category]: {
+                total: data.total || 0,
+                enriched: 0
+              }
+            } as typeof enrichmentCounts));
+          }
+          // Collapse queries section when moving to enrichment
+          setTimeout(() => {
+            setIsQueriesExpanded(false);
+          }, 1000);
+          scrollToStatus();
+        } else if (data.type === 'enrichment') {
+          // Show enrichment progress
+          setCurrentPhase('enrichment');
+          setStatus({
+            step: 'Enriching',
+            message: data.message || 'Enriching documents with additional content'
+          });
+          // Update enriched count if provided
+          if (data.category && data.enriched !== undefined) {
+            const category = data.category as 'company' | 'industry' | 'financial' | 'news';
+            setEnrichmentCounts(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                [category]: {
+                  total: prev[category]?.total || data.total || 0,
+                  enriched: data.enriched
+                }
+              } as typeof enrichmentCounts;
+            });
+          }
+        } else if (data.type === 'briefing_start') {
+          // Show briefing generation starting
+          setCurrentPhase('briefing');
+          setStatus({
+            step: 'Generating briefings',
+            message: `Creating ${data.category} briefing from ${data.total_docs} documents`
+          });
+          // Collapse enrichment section when moving to briefing
+          setTimeout(() => {
+            setIsEnrichmentExpanded(false);
+          }, 1000);
+          scrollToStatus();
+        } else if (data.type === 'briefing_complete') {
+          // Show briefing completion and mark category as complete
+          setCurrentPhase('briefing');
+          setStatus({
+            step: 'Briefing complete',
+            message: `${data.category} briefing generated (${data.content_length} characters)`
+          });
+          // Mark briefing as complete for this category
+          if (data.category) {
+            setBriefingStatus(prev => {
+              const newBriefingStatus = {
+                ...prev,
+                [data.category]: true
+              };
+              
+              // Check if all briefings are complete
+              const allBriefingsComplete = Object.values(newBriefingStatus).every(status => status);
+              
+              // Collapse briefing section when all briefings are complete
+              if (allBriefingsComplete) {
+                setTimeout(() => {
+                  setIsBriefingExpanded(false);
+                }, 2000);
+              }
+              
+              return newBriefingStatus;
+            });
+          }
+        } else if (data.type === 'report_compilation') {
+          // Show report compilation
+          setCurrentPhase('briefing');
+          setStatus({
+            step: 'Finalizing report',
+            message: data.message || 'Compiling final report'
+          });
+        } else if (data.type === 'report_chunk' && data.chunk) {
+          // Stream report chunks as they arrive
+          setIsReportStreaming(true);
+          setOutput((prev) => {
+            const currentReport = prev?.details?.report || '';
+            return {
+              summary: "",
+              details: { report: currentReport + data.chunk },
+            };
+          });
+          setStatus({
+            step: 'Finalizing report',
+            message: 'Generating final report...'
+          });
+        } else if (data.type === 'complete' && data.report) {
+          setIsReportStreaming(false);
+          setOutput({
+            summary: "",
+            details: { report: data.report },
+          });
+          setStatus({ step: "Complete", message: "Research completed successfully" });
+          setIsComplete(true);
+          setIsResearching(false);
+          eventSource.close();
+        } else if (data.type === 'error') {
+          setError(data.error);
+          setIsResearching(false);
+          eventSource.close();
+        }
+      } catch (err) {
+        console.error('Error parsing SSE data:', err);
       }
     };
 
-    wsRef.current = ws;
+    eventSource.onerror = () => {
+      setError('Connection lost or server error');
+      setIsResearching(false);
+      eventSource.close();
+    };
   };
 
+  // Cleanup SSE on unmount
   useEffect(() => {
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
     };
   }, []);
@@ -598,17 +369,18 @@ function App() {
       await new Promise(resolve => setTimeout(resolve, 300)); // Wait for reset animation
     }
 
-    // Reset states
-    setHasFinalReport(false);
-    setReconnectAttempts(0);
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
+    // Clear any existing SSE connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
 
     setIsResearching(true);
     setOriginalCompanyName(formData.companyName);
-    setHasScrolledToStatus(false); // Reset scroll flag when starting new research
+    setStatus({
+      step: "Processing",
+      message: "Starting research..."
+    });
 
     try {
       const url = `${API_URL}/research`;
@@ -620,7 +392,6 @@ function App() {
           : `https://${formData.companyUrl}`
         : undefined;
 
-      // Log the request details
       const requestData = {
         company: formData.companyName,
         company_url: formattedCompanyUrl,
@@ -637,34 +408,20 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(requestData),
-      }).catch((error) => {
-        console.error("Fetch error:", error);
-        throw error;
-      });
-
-      console.log("Response received:", {
-        status: response.status,
-        ok: response.ok,
-        statusText: response.statusText,
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.log("Error response:", errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (data.job_id) {
-        console.log("Connecting WebSocket with job_id:", data.job_id);
-        connectWebSocket(data.job_id);
+        streamResults(data.job_id);
       } else {
         throw new Error("No job ID received");
       }
     } catch (err) {
-      console.log("Caught error:", err);
       setError(err instanceof Error ? err.message : "Failed to start research");
       setIsResearching(false);
     }
@@ -676,7 +433,6 @@ function App() {
     
     setIsGeneratingPdf(true);
     try {
-      console.log("Generating PDF with company name:", originalCompanyName);
       const response = await fetch(`${API_URL}/generate-pdf`, {
         method: 'POST',
         headers: {
@@ -733,91 +489,6 @@ function App() {
     }
   };
 
-  // Add document count display component
-
-  // Add BriefingProgress component
-
-  // Add EnrichmentProgress component
-
-  // Function to render progress components in order
-  const renderProgressComponents = () => {
-    const components = [];
-
-    // Research Report (always at the top when available)
-    if (output && output.details) {
-      components.push(
-        <ResearchReport
-          key="report"
-          output={{
-            summary: output.summary,
-            details: {
-              report: output.details.report || ''
-            }
-          }}
-          isResetting={isResetting}
-          glassStyle={glassStyle}
-          fadeInAnimation={fadeInAnimation}
-          loaderColor={loaderColor}
-          isGeneratingPdf={isGeneratingPdf}
-          isCopied={isCopied}
-          onCopyToClipboard={handleCopyToClipboard}
-          onGeneratePdf={handleGeneratePdf}
-        />
-      );
-    }
-
-    // Current phase component
-    if (currentPhase === 'briefing' || (currentPhase === 'complete' && researchState.briefingStatus)) {
-      components.push(
-        <ResearchBriefings
-          key="briefing"
-          briefingStatus={researchState.briefingStatus}
-          isExpanded={isBriefingExpanded}
-          onToggleExpand={() => setIsBriefingExpanded(!isBriefingExpanded)}
-          isResetting={isResetting}
-        />
-      );
-    }
-
-    if (currentPhase === 'enrichment' || currentPhase === 'briefing' || currentPhase === 'complete') {
-      components.push(
-        <CurationExtraction
-          key="enrichment"
-          enrichmentCounts={researchState.enrichmentCounts}
-          isExpanded={isEnrichmentExpanded}
-          onToggleExpand={() => setIsEnrichmentExpanded(!isEnrichmentExpanded)}
-          isResetting={isResetting}
-          loaderColor={loaderColor}
-        />
-      );
-    }
-
-    // Queries are always at the bottom when visible
-    if (shouldShowQueries && (researchState.queries.length > 0 || Object.keys(researchState.streamingQueries).length > 0)) {
-      components.push(
-        <ResearchQueries
-          key="queries"
-          queries={researchState.queries}
-          streamingQueries={researchState.streamingQueries}
-          isExpanded={isQueriesExpanded}
-          onToggleExpand={() => setIsQueriesExpanded(!isQueriesExpanded)}
-          isResetting={isResetting}
-          glassStyle={glassStyle.base}
-        />
-      );
-    }
-
-    return components;
-  };
-
-  // Add cleanup for polling interval
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white p-8 relative">
@@ -855,10 +526,59 @@ function App() {
           statusRef={statusRef}
         />
 
-        {/* Progress Components Container */}
-        <div className="space-y-12 transition-all duration-500 ease-in-out">
-          {renderProgressComponents()}
-        </div>
+        {/* Research Report - always at the top when available */}
+        {output && output.details && (
+          <ResearchReport
+            output={{
+              summary: output.summary,
+              details: {
+                report: output.details.report || ''
+              }
+            }}
+            isResetting={isResetting}
+            isStreaming={isReportStreaming}
+            glassStyle={glassStyle}
+            fadeInAnimation={fadeInAnimation}
+            loaderColor={loaderColor}
+            isGeneratingPdf={isGeneratingPdf}
+            isCopied={isCopied}
+            onCopyToClipboard={handleCopyToClipboard}
+            onGeneratePdf={handleGeneratePdf}
+          />
+        )}
+
+        {/* Research Briefings - show once briefing starts and keep visible */}
+        {(currentPhase === 'briefing' || currentPhase === 'complete') && (
+          <ResearchBriefings
+            briefingStatus={briefingStatus}
+            isExpanded={isBriefingExpanded}
+            onToggleExpand={() => setIsBriefingExpanded(!isBriefingExpanded)}
+            isResetting={isResetting}
+          />
+        )}
+
+        {/* Curation and Extraction - show once enrichment starts and keep visible */}
+        {(currentPhase === 'enrichment' || currentPhase === 'briefing' || currentPhase === 'complete') && enrichmentCounts && (
+          <CurationExtraction
+            enrichmentCounts={enrichmentCounts}
+            isExpanded={isEnrichmentExpanded}
+            onToggleExpand={() => setIsEnrichmentExpanded(!isEnrichmentExpanded)}
+            isResetting={isResetting}
+            loaderColor={loaderColor}
+          />
+        )}
+
+        {/* Research Queries - always at the bottom when visible */}
+        {(queries.length > 0 || Object.keys(streamingQueries).length > 0) && (
+          <ResearchQueries
+            queries={queries}
+            streamingQueries={streamingQueries}
+            isExpanded={isQueriesExpanded}
+            onToggleExpand={() => setIsQueriesExpanded(!isQueriesExpanded)}
+            isResetting={isResetting}
+            glassStyle={glassStyle.card}
+          />
+        )}
       </div>
     </div>
   );

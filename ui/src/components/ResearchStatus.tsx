@@ -1,8 +1,8 @@
-import React from 'react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { ResearchStatusProps } from '../types';
+import type { ResearchStatusProps } from '../types';
+import { fadeInAnimation } from '../styles';
 
-const ResearchStatus: React.FC<ResearchStatusProps> = ({
+const ResearchStatus = ({
   status,
   error,
   isComplete,
@@ -11,16 +11,13 @@ const ResearchStatus: React.FC<ResearchStatusProps> = ({
   glassStyle,
   loaderColor,
   statusRef
-}) => {
-  const glassCardStyle = `${glassStyle.base} rounded-2xl p-6`;
-  const fadeInAnimation = "transition-all duration-300 ease-in-out";
-
+}: ResearchStatusProps) => {
   if (!status) return null;
 
   return (
     <div 
       ref={statusRef} 
-      className={`${glassCardStyle} ${fadeInAnimation} ${isResetting ? 'opacity-0 transform -translate-y-4' : 'opacity-100 transform translate-y-0'} bg-white/80 backdrop-blur-sm border-gray-200 font-['DM_Sans']`}
+      className={`${glassStyle.base} rounded-2xl p-6 ${fadeInAnimation.fadeIn} ${isResetting ? 'opacity-0 transform -translate-y-4' : 'opacity-100 transform translate-y-0'} bg-white/80 backdrop-blur-sm border-gray-200 font-['DM_Sans']`}
     >
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0">

@@ -1,9 +1,9 @@
- [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.md)
-[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.zh.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.fr.md)
-[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.es.md)
-[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.jp.md)
-[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.kr.md)
+ [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.md)
+[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.zh.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.fr.md)
+[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.es.md)
+[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.jp.md)
+[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.kr.md)
 
 # Investigador de Empresas 🔍
 
@@ -19,11 +19,11 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 - **Investigación Multi-Fuente**: Recopila datos de diversas fuentes, incluyendo sitios web de empresas, artículos de noticias, informes financieros y análisis sectoriales
 - **Filtrado de Contenido Impulsado por IA**: Utiliza la puntuación de relevancia de Tavily para la selección de contenido
-- **Transmisión de Progreso en Tiempo Real**: Utiliza conexiones WebSocket para transmitir el progreso de la investigación y los resultados
+- **Procesamiento Asíncrono**: Arquitectura eficiente basada en polling para rastrear el progreso de la investigación
 - **Arquitectura de Modelo Dual**:
-  - Gemini 2.0 Flash para síntesis de investigación de alto contexto
-  - GPT-4.1 para formato preciso y edición de informes
-- **Frontend Moderno en React**: Interfaz de usuario receptiva con actualizaciones en tiempo real, seguimiento de progreso y opciones de descarga
+  - Gemini 2.5 Flash para síntesis de investigación de alto contexto
+  - GPT-5.1 para formato preciso y edición de informes
+- **Frontend Moderno en React**: Interfaz de usuario receptiva con seguimiento de progreso y opciones de descarga
 - **Arquitectura Modular**: Construido utilizando un sistema de nodos de investigación y procesamiento especializados
 
 ## Marco de Agentes
@@ -41,8 +41,8 @@ La plataforma sigue un marco basado en agentes con nodos especializados que proc
 2. **Nodos de Procesamiento**:
    - `Collector`: Agrega datos de investigación de todos los analizadores
    - `Curator`: Implementa filtrado de contenido y puntuación de relevancia
-   - `Briefing`: Genera resúmenes específicos por categoría utilizando Gemini 2.0 Flash
-   - `Editor`: Compila y formatea los resúmenes en un informe final utilizando GPT-4.1-mini
+   - `Briefing`: Genera resúmenes específicos por categoría utilizando Gemini 2.5 Flash
+   - `Editor`: Compila y formatea los resúmenes en un informe final utilizando GPT-5.1
 
    ![interfaz web](<static/agent-flow.png>)
 
@@ -50,13 +50,13 @@ La plataforma sigue un marco basado en agentes con nodos especializados que proc
 
 La plataforma aprovecha modelos separados para un rendimiento óptimo:
 
-1. **Gemini 2.0 Flash** (`briefing.py`):
+1. **Gemini 2.5 Flash** (`briefing.py`):
    - Maneja tareas de síntesis de investigación de alto contexto
    - Sobresale en el procesamiento y resumen de grandes volúmenes de datos
    - Utilizado para generar resúmenes iniciales por categoría
    - Eficiente en mantener el contexto a través de múltiples documentos
 
-2. **GPT-4.1 mini** (`editor.py`):
+2. **GPT-5.1** (`editor.py`):
    - Se especializa en tareas precisas de formato y edición
    - Maneja la estructura y consistencia en markdown
    - Superior en seguir instrucciones exactas de formato
@@ -66,7 +66,7 @@ La plataforma aprovecha modelos separados para un rendimiento óptimo:
      - Formateo en markdown
      - Transmisión de informes en tiempo real
 
-Este enfoque combina la fortaleza de Gemini en el manejo de ventanas de contexto grandes con la precisión de GPT-4.1-mini en seguir instrucciones específicas de formato.
+Este enfoque combina la fortaleza de Gemini en el manejo de ventanas de contexto grandes con la precisión de GPT-5.1 en seguir instrucciones específicas de formato.
 
 ### Sistema de Selección de Contenido
 
@@ -82,46 +82,30 @@ La plataforma utiliza un sistema de filtrado de contenido en `curator.py`:
    - El contenido se normaliza y limpia
    - Las URLs se desduplicaron y estandarizaron
    - Los documentos se ordenan por puntuaciones de relevancia
-   - Las actualizaciones de progreso en tiempo real se envían a través de WebSocket
+   - La investigación se ejecuta de forma asíncrona en segundo plano
 
-### Sistema de Comunicación en Tiempo Real
+### Arquitectura del Backend
 
-La plataforma implementa un sistema de comunicación en tiempo real basado en WebSocket:
+La plataforma implementa un sistema de comunicación simple basado en polling:
 
 ![interfaz web](<static/ui-2.png>)
 
 1. **Implementación Backend**:
-   - Utiliza el soporte de WebSocket de FastAPI
-   - Mantiene conexiones persistentes por trabajo de investigación
-   - Envía actualizaciones de estado estructuradas para varios eventos:
-     ```python
-     await websocket_manager.send_status_update(
-         job_id=job_id,
-         status="processing",
-         message=f"Generating {category} briefing",
-         result={
-             "step": "Briefing",
-             "category": category,
-             "total_docs": len(docs)
-         }
-     )
-     ```
-
+   - Utiliza FastAPI con soporte asíncrono
+   - Las tareas de investigación se ejecutan en segundo plano
+   - Los resultados se almacenan y acceden mediante endpoints REST
+   - Seguimiento simple del estado del trabajo
+   
 2. **Integración Frontend**:
-   - Los componentes de React se suscriben a actualizaciones WebSocket
-   - Las actualizaciones se procesan y muestran en tiempo real
-   - Diferentes componentes de UI manejan tipos específicos de actualizaciones:
-     - Progreso de generación de consultas
-     - Estadísticas de selección de documentos
-     - Estado de finalización de resúmenes
-     - Progreso de generación de informes
+   - El frontend React envía solicitudes de investigación
+   - Recibe job_id para seguimiento
+   - Realiza polling al endpoint `/research/{job_id}/report`
+   - Muestra el informe final cuando está completo
 
-3. **Tipos de Estado**:
-   - `query_generating`: Actualizaciones en tiempo real de creación de consultas
-   - `document_kept`: Progreso de selección de documentos
-   - `briefing_start/complete`: Estado de generación de resúmenes
-   - `report_chunk`: Transmisión de generación de informes
-   - `curation_complete`: Estadísticas finales de documentos
+3. **Endpoints de la API**:
+   - `POST /research`: Enviar nueva solicitud de investigación
+   - `GET /research/{job_id}/report`: Polling para informe completado
+   - `POST /generate-pdf`: Generar PDF del contenido del informe
 
 ## Instalación
 
@@ -131,7 +115,7 @@ La forma más sencilla de comenzar es utilizando el script de instalación, que 
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -169,7 +153,7 @@ Si prefieres realizar la instalación manualmente, sigue estos pasos:
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -227,7 +211,6 @@ Luego, abre `ui/.env` y añade tus variables de entorno del frontend:
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=tu_clave_google_maps_aqui
 ```
 
@@ -237,7 +220,7 @@ La aplicación puede ejecutarse utilizando Docker y Docker Compose:
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -270,7 +253,6 @@ Luego, abre `ui/.env` y añade tus variables de entorno del frontend:
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=tu_clave_google_maps_aqui
 ```
 
@@ -337,7 +319,6 @@ npm run dev
 
    El backend estará disponible en:
    - Punto de conexión API: `http://localhost:8000`
-   - Punto de conexión WebSocket: `ws://localhost:8000/research/ws/{job_id}`
 
 2. Iniciar el servidor de desarrollo del frontend:
    ```bash

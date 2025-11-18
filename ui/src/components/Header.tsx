@@ -1,14 +1,11 @@
-import React from 'react';
 import { Github } from 'lucide-react';
 
 interface HeaderProps {
   glassStyle: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ glassStyle }) => {
+const Header = ({ glassStyle }: HeaderProps) => {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('Failed to load Tavily logo');
-    console.log('Image path:', e.currentTarget.src);
     e.currentTarget.style.display = 'none';
   };
 
@@ -45,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ glassStyle }) => {
           />
         </a>
         <a
-          href="https://github.com/pogjester/company-research-agent"
+          href="https://github.com/guy-hartstein/company-research-agent"
           target="_blank"
           rel="noopener noreferrer"
           className={`text-gray-600 hover:text-gray-900 transition-colors ${glassStyle} rounded-lg flex items-center justify-center`}

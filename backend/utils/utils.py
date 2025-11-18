@@ -14,18 +14,7 @@ from reportlab.platypus import (
     Spacer,
 )
 
-
-def extract_title_from_url_path(url: str) -> str:
-    """Extract a title from a URL path."""
-    parts = url.rstrip('/').split('/')
-    return parts[-1] if parts else 'No title found'
-
-def extract_link_info(markdown_link: str) -> tuple[str, str]:
-    """Extract text and URL from a Markdown link [text](URL)."""
-    match = re.match(r'\[(.*?)\]\((.*?)\)', markdown_link)
-    if match:
-        return match.group(1), match.group(2)
-    return ("", "")
+from .references import extract_link_info
 
 logger = logging.getLogger(__name__)
 
@@ -230,12 +219,6 @@ def generate_pdf_from_md(markdown_content: str, output_pdf) -> None:
         error_msg = f"Error generating PDF: {str(e)}"
         logger.error(error_msg)
         raise Exception(error_msg)
-
-# Example usage (uncomment if you want to run directly):
-# if __name__ == '__main__':
-#     with open('example.md', 'r', encoding='utf-8') as f:
-#         md_text = f.read()
-#     generate_pdf_from_md(md_text, 'output.pdf')
 
 def convert_markdown_to_pdf_elements(markdown_text: str, custom_styles: Dict) -> List:
     """

@@ -1,9 +1,9 @@
- [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.md)
-[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.zh.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.fr.md)
-[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.es.md)
-[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.jp.md)
-[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.kr.md)
+ [![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.md)
+[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.zh.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.fr.md)
+[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.es.md)
+[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.jp.md)
+[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/guy-hartstein/company-research-agent/blob/main/README.kr.md)
 
 
 # 企業調査エージェント 🔍
@@ -20,11 +20,11 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 - **マルチソース調査**：企業ウェブサイト、ニュース記事、財務報告書、業界分析など、様々なソースからデータを取得
 - **AIによるコンテンツフィルタリング**：Tavilyの関連性スコアを使用したコンテンツキュレーション
-- **リアルタイムストリーミング**：WebSocketを使用して調査の進捗と結果をリアルタイムで配信
+- **非同期処理**：調査の進捗を追跡するための効率的なポーリングベースアーキテクチャ
 - **デュアルモデルアーキテクチャ**：
-  - 大規模コンテキスト調査統合のためのGemini 2.0 Flash
-  - 精密なレポート書式設定と編集のためのGPT-4.1
-- **モダンなReactフロントエンド**：リアルタイム更新、進捗追跡、ダウンロードオプションを備えたレスポンシブインターフェース
+  - 大規模コンテキスト調査統合のためのGemini 2.5 Flash
+  - 精密なレポート書式設定と編集のためのGPT-5.1
+- **モダンなReactフロントエンド**：進捗追跡とダウンロードオプションを備えたレスポンシブインターフェース
 - **モジュラーアーキテクチャ**：専門的な調査・処理ノードのパイプラインを中心に構築
 
 ## エージェントフレームワーク
@@ -42,8 +42,8 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 2. **処理ノード**：
    - `Collector`：すべてのアナライザーから調査データを集約
    - `Curator`：コンテンツフィルタリングと関連性スコアリングを実装
-   - `Briefing`：Gemini 2.0 Flashを使用してカテゴリ別の要約を生成
-   - `Editor`：GPT-4.1-miniで要約を最終レポートにコンパイル・書式設定
+   - `Briefing`：Gemini 2.5 Flashを使用してカテゴリ別の要約を生成
+   - `Editor`：GPT-5.1で要約を最終レポートにコンパイル・書式設定
 
    ![web ui](<static/agent-flow.png>)
 
@@ -51,13 +51,13 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 このプラットフォームは最適なパフォーマンスのために異なるモデルを活用します：
 
-1. **Gemini 2.0 Flash** (`briefing.py`)：
+1. **Gemini 2.5 Flash** (`briefing.py`)：
    - 大規模コンテキスト調査統合を処理
    - 大量データの処理と要約に優れる
    - カテゴリ別の初期要約生成に使用
    - 複数文書にわたるコンテキスト維持に効率的
 
-2. **GPT-4.1 mini** (`editor.py`)：
+2. **GPT-5.1** (`editor.py`)：
    - 精密な書式設定と編集に特化
    - Markdown構造と一貫性を処理
    - 正確な書式設定指示の遵守に優れる
@@ -67,7 +67,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
      - Markdown書式設定
      - リアルタイムレポートストリーミング
 
-このアプローチは、Geminiの大規模コンテキストウィンドウ処理能力とGPT-4.1-miniの書式設定指示精度を組み合わせます。
+このアプローチは、Geminiの大規模コンテキストウィンドウ処理能力とGPT-5.1の書式設定指示精度を組み合わせます。
 
 ### コンテンツキュレーションシステム
 
@@ -83,46 +83,30 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
    - コンテンツは正規化・クリーニングされます
    - URLは重複除去・標準化されます
    - 文書は関連性スコアでソートされます
-   - 進捗更新はWebSocket経由でリアルタイム送信されます
+   - 調査はバックグラウンドで非同期実行されます
 
-### リアルタイム通信システム
+### バックエンドアーキテクチャ
 
-このプラットフォームはWebSocketベースのリアルタイム通信システムを実装します：
+プラットフォームはポーリングベースのシンプルな通信システムを実装します：
 
 ![web ui](<static/ui-2.png>)
 
 1. **バックエンド実装**：
-   - FastAPIのWebSocketサポートを使用
-   - 調査タスクごとに永続的な接続を維持
-   - 様々なイベントに対して構造化された更新を送信：
-     ```python
-     await websocket_manager.send_status_update(
-         job_id=job_id,
-         status="processing",
-         message=f"{category}ブリーフィング生成中",
-         result={
-             "step": "Briefing",
-             "category": category,
-             "total_docs": len(docs)
-         }
-     )
-     ```
-
+   - 非同期サポート付きのFastAPIを使用
+   - 調査タスクはバックグラウンドで実行
+   - 結果はRESTエンドポイント経由で保存・アクセス
+   - シンプルなジョブステータス追跡
+   
 2. **フロントエンド統合**：
-   - ReactコンポーネントがWebSocket更新を購読
-   - 更新はリアルタイムで処理・表示されます
-   - 異なるUIコンポーネントが特定の更新タイプを処理：
-     - クエリ生成進捗
-     - 文書キュレーション統計
-     - ブリーフィング完了ステータス
-     - レポート生成進捗
+   - Reactフロントエンドが調査リクエストを送信
+   - 追跡用のjob_idを受信
+   - `/research/{job_id}/report`エンドポイントをポーリング
+   - 完了時に最終レポートを表示
 
-3. **ステータスタイプ**：
-   - `query_generating`：リアルタイムクエリ作成更新
-   - `document_kept`：文書キュレーション進捗
-   - `briefing_start/complete`：ブリーフィング生成ステータス
-   - `report_chunk`：レポート生成ストリーミング
-   - `curation_complete`：最終文書統計
+3. **APIエンドポイント**：
+   - `POST /research`：新しい調査リクエストの送信
+   - `GET /research/{job_id}/report`：完了したレポートのポーリング
+   - `POST /generate-pdf`：レポートコンテンツからPDFを生成
 
 ## セットアップ
 
@@ -132,7 +116,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 1. リポジトリをクローン：
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -170,7 +154,7 @@ chmod +x setup.sh
 
 1. リポジトリをクローン：
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -228,7 +212,6 @@ cp ui/.env.development.example ui/.env
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
@@ -238,7 +221,7 @@ VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 1. リポジトリをクローン：
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
+git clone https://github.com/guy-hartstein/tavily-company-research.git
 cd tavily-company-research
 ```
 
@@ -271,7 +254,6 @@ cp ui/.env.development.example ui/.env
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
@@ -338,7 +320,6 @@ npm run dev
 
    バックエンドは以下で利用可能：
    - APIエンドポイント：`http://localhost:8000`
-   - WebSocketエンドポイント：`ws://localhost:8000/research/ws/{job_id}`
 
 2. フロントエンド開発サーバーを起動：
    ```bash

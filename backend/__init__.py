@@ -1,10 +1,12 @@
 """Backend package for tavily-company-research."""
 
-import os
-import sys
-from pathlib import Path
 import logging
+import os
+from pathlib import Path
+
 from dotenv import load_dotenv
+
+from .graph import Graph
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -26,7 +28,5 @@ if not os.getenv("OPENAI_API_KEY"):
 
 if not os.getenv("GEMINI_API_KEY"):
     logger.warning("GEMINI_API_KEY environment variable is not set.")
-
-from .graph import Graph
 
 __all__ = ["Graph"]
