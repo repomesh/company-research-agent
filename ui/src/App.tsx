@@ -52,6 +52,7 @@ function App() {
   const [isEnrichmentExpanded, setIsEnrichmentExpanded] = useState(true);
   const [isBriefingExpanded, setIsBriefingExpanded] = useState(true);
   const [hasScrolledToStatus, setHasScrolledToStatus] = useState(false);
+  const [isReportStreaming, setIsReportStreaming] = useState(false);
 
   // Add new state for color cycling
   const [loaderColor, setLoaderColor] = useState("#468BFF");
@@ -112,6 +113,7 @@ function App() {
       setIsEnrichmentExpanded(true);
       setIsBriefingExpanded(true);
       setHasScrolledToStatus(false);
+      setIsReportStreaming(false);
       setIsResetting(false);
     }, 300);
   };
@@ -126,12 +128,49 @@ function App() {
         const data = JSON.parse(event.data);
         console.log('[SSE Event]', data); // Debug: Log all SSE events
         
+        // Helper function to map node names to user-friendly step names
+        const getStepName = (nodeName: string): string => {
+          const stepMap: Record<string, string> = {
+            'grounding': 'Search',
+            'financial_analyst': 'Search',
+            'news_scanner': 'Search',
+            'industry_analyst': 'Search',
+            'company_analyst': 'Search',
+            'collector': 'Search',
+            'curator': 'Enriching',
+            'enricher': 'Enriching',
+            'briefing': 'Briefing',
+            'editor': 'Finalizing'
+          };
+          return stepMap[nodeName] || nodeName;
+        };
+
+        // Handle progress events from backend (node transitions)
+        if (data.type === 'progress' && data.step) {
+          const stepName = getStepName(data.step);
+          setStatus({
+            step: stepName,
+            message: `Processing ${data.step}...`
+          });
+          
+          // Update phase based on step
+          if (['grounding', 'financial_analyst', 'news_scanner', 'industry_analyst', 'company_analyst', 'collector'].includes(data.step)) {
+            setCurrentPhase('search');
+          } else if (['curator', 'enricher'].includes(data.step)) {
+            setCurrentPhase('enrichment');
+          } else if (data.step === 'briefing') {
+            setCurrentPhase('briefing');
+          }
+          
+          scrollToStatus();
+        }
+        
         // Direct event-to-phase mapping
         if (data.type === 'query_generating') {
           // Show query being generated and update streaming queries
           setCurrentPhase('search');
           setStatus({
-            step: data.category || 'Generating queries',
+            step: 'Search',
             message: `Query ${data.query_number}: ${data.query}`
           });
           // Update streaming queries with current partial query
@@ -149,7 +188,7 @@ function App() {
           // Show completed query and move to queries list
           setCurrentPhase('search');
           setStatus({
-            step: data.category || 'Query generated',
+            step: 'Search',
             message: `Generated: ${data.query}`
           });
           // Add to completed queries
@@ -206,7 +245,7 @@ function App() {
           // Show enrichment progress
           setCurrentPhase('enrichment');
           setStatus({
-            step: 'Enriching data',
+            step: 'Enriching',
             message: data.message || 'Enriching documents with additional content'
           });
           // Update enriched count if provided
@@ -270,7 +309,22 @@ function App() {
             step: 'Finalizing report',
             message: data.message || 'Compiling final report'
           });
+        } else if (data.type === 'report_chunk' && data.chunk) {
+          // Stream report chunks as they arrive
+          setIsReportStreaming(true);
+          setOutput((prev) => {
+            const currentReport = prev?.details?.report || '';
+            return {
+              summary: "",
+              details: { report: currentReport + data.chunk },
+            };
+          });
+          setStatus({
+            step: 'Finalizing report',
+            message: 'Generating final report...'
+          });
         } else if (data.type === 'complete' && data.report) {
+          setIsReportStreaming(false);
           setOutput({
             summary: "",
             details: { report: data.report },
@@ -493,6 +547,7 @@ function App() {
               }
             }}
             isResetting={isResetting}
+            isStreaming={isReportStreaming}
             glassStyle={glassStyle}
             fadeInAnimation={fadeInAnimation}
             loaderColor={loaderColor}

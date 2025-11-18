@@ -13,6 +13,7 @@ interface ResearchReportProps {
     };
   } | null;
   isResetting: boolean;
+  isStreaming: boolean;
   glassStyle: GlassStyle;
   fadeInAnimation: AnimationStyle;
   loaderColor: string;
@@ -25,6 +26,7 @@ interface ResearchReportProps {
 const ResearchReport: React.FC<ResearchReportProps> = ({
   output,
   isResetting,
+  isStreaming,
   glassStyle,
   fadeInAnimation,
   loaderColor,
@@ -39,6 +41,12 @@ const ResearchReport: React.FC<ResearchReportProps> = ({
     <div 
       className={`${glassStyle.card} ${fadeInAnimation.fadeIn} ${isResetting ? 'opacity-0 transform -translate-y-4' : 'opacity-100 transform translate-y-0'} font-['DM_Sans']`}
     >
+      {isStreaming && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-2 bg-[#468BFF]/10 rounded-lg border border-[#468BFF]/20">
+          <Loader2 className="h-4 w-4 animate-spin" style={{ stroke: loaderColor }} />
+          <span className="text-sm text-gray-600">Generating report...</span>
+        </div>
+      )}
       <div className="flex justify-end gap-2 mb-4">
         {output?.details?.report && (
           <>

@@ -7,10 +7,10 @@ All LLM prompts are defined here for easy maintenance and updates.
 # BRIEFING PROMPTS
 # ============================================================================
 
-COMPANY_BRIEFING_PROMPT = """Create a focused company briefing for {company}, a {industry} company based in {hq_location}.
+COMPANY_BRIEFING_PROMPT = """Create a focused, yet comprehensive company briefing for {company}, a {industry} company based in {hq_location}.
 Key requirements:
 1. Start with: "{company} is a [what] that [does what] for [whom]"
-2. Structure using these exact headers and bullet points:
+2. Structure using these headers and bullet points:
 
 ### Core Product/Service
 * List distinct products/features
@@ -38,7 +38,7 @@ Key requirements:
 5. No paragraphs, only bullet points
 6. Provide only the briefing. No explanations or commentary."""
 
-INDUSTRY_BRIEFING_PROMPT = """Create a focused industry briefing for {company}, a {industry} company based in {hq_location}.
+INDUSTRY_BRIEFING_PROMPT = """Create a focused, yet comprehensive industry briefing for {company}, a {industry} company based in {hq_location}.
 Key requirements:
 1. Structure using these exact headers and bullet points:
 
@@ -64,7 +64,7 @@ Key requirements:
 4. Never mention "no information found" or "no data available"
 5. Provide only the briefing. No explanation."""
 
-FINANCIAL_BRIEFING_PROMPT = """Create a focused financial briefing for {company}, a {industry} company based in {hq_location}.
+FINANCIAL_BRIEFING_PROMPT = """Create a focused, yet comprehensive financial briefing for {company}, a {industry} company based in {hq_location}.
 Key requirements:
 1. Structure using these headers and bullet points:
 
@@ -83,7 +83,7 @@ Key requirements:
 6. NEVER include a range of funding amounts. Use your best judgement to determine the exact amount based on the information provided.
 6. Provide only the briefing. No explanation or commentary."""
 
-NEWS_BRIEFING_PROMPT = """Create a focused news briefing for {company}, a {industry} company based in {hq_location}.
+NEWS_BRIEFING_PROMPT = """Create a focused, yet comprehensive news briefing for {company}, a {industry} company based in {hq_location}.
 Key requirements:
 1. Structure into these categories using bullet points:
 
@@ -119,7 +119,7 @@ COMPILE_CONTENT_PROMPT = """You are compiling a comprehensive research report ab
 Compiled briefings:
 {combined_content}
 
-Create a comprehensive and focused report on {company}, a {industry} company headquartered in {hq_location} that:
+Create a deep, comprehensive, and thorough report on {company}, a {industry} company headquartered in {hq_location} that:
 1. Integrates information from all sections into a cohesive non-repetitive narrative
 2. Maintains important details from each section
 3. Logically organizes information and removes transitional commentary / explanations
@@ -156,7 +156,7 @@ Current report:
 3. Remove sections lacking substantial content
 4. Remove any meta-commentary (e.g. "Here is the news...")
 
-Strictly enforce this EXACT document structure:
+Strictly enforce this document structure:
 
 ## Company Overview
 [Company content with ### subsections]
@@ -231,4 +231,3 @@ Important Guidelines:
 - Make queries very brief and to the point
 - Provide exactly 4 search queries (one per line), with no hyphens or dashes
 - DO NOT make assumptions about the industry - use only the provided industry information"""
-

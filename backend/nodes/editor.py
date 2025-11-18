@@ -104,6 +104,7 @@ class Editor:
         """Compile section briefings into a final report and update the state."""
         try:
             logger.info("Starting report compilation")
+            job_id = state.get('job_id')
             
             # Step 1: Initial Compilation
             edited_report = await self.compile_content(state, briefings)
@@ -114,8 +115,16 @@ class Editor:
             # Step 2 & 3: Content sweep and streaming
             final_report = ""
             async for event in self.content_sweep(edited_report):
-                # Events are yielded for potential consumption
-                # For now we just accumulate the text
+                # Forward streaming events to job_status
+                if isinstance(event, dict) and job_id:
+                    try:
+                        if job_id in job_status:
+                            job_status[job_id]["events"].append(event)
+                            logger.debug(f"Appended report_chunk event ({len(event.get('chunk', ''))} chars)")
+                    except Exception as e:
+                        logger.error(f"Error appending report_chunk event: {e}")
+                
+                # Accumulate the text
                 if isinstance(event, str):
                     final_report = event
             
