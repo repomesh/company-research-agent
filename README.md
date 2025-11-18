@@ -51,7 +51,7 @@ The platform follows an agentic framework with specialized nodes that process da
 
 The platform leverages separate models for optimal performance:
 
-1. **Gemini 2.0 Flash** (`briefing.py`):
+1. **Gemini 2.5 Flash** (`briefing.py`):
    - Handles high-context research synthesis tasks
    - Excels at processing and summarizing large volumes of data
    - Used for generating initial category briefings
