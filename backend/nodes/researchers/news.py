@@ -1,5 +1,6 @@
 from typing import Any
 
+
 from langchain_core.messages import AIMessage
 
 from ...classes import ResearchState

@@ -102,7 +102,6 @@ class GroundingNode:
                 error_str = str(e)
                 logger.error(f"Website crawl error: {error_str}", exc_info=True)
                 error_msg = f"⚠️ Error crawling website content: {error_str}"
-                print(error_msg)
                 msg += f"\n{error_msg}"
                 yield {
                     "type": "crawl_error",

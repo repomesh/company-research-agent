@@ -29,7 +29,7 @@ class Enricher:
             if result and result.get('results'):
                 return {url: result['results'][0].get('raw_content', '')}
         except Exception as e:
-            print(f"Error fetching raw content for {url}: {e}")
+            logger.error(f"Error fetching raw content for {url}: {e}")
             return {url: ''}
         return {url: ''}
 
@@ -118,14 +118,13 @@ class Enricher:
                         "message": f"Enriching {len(enrichment_tasks)} categories"
                     })
             except Exception as e:
-                import logging
-                logging.getLogger(__name__).error(f"Error appending enrichment event: {e}")
+                logger.error(f"Error appending enrichment event: {e}")
         
         # Process all categories in parallel
         if enrichment_tasks:
             async def process_category(task):
                 try:
-                    raw_contents = await self.fetch_raw_content(list[str](task['docs'].keys()))
+                    raw_contents = await self.fetch_raw_content(list(task['docs'].keys()))
                     
                     enriched_count = 0
                     for url, content in raw_contents.items():
@@ -143,7 +142,7 @@ class Enricher:
                         'total': len(task['docs'])
                     }
                 except Exception as e:
-                    print(f"Error processing category {task['label']}: {e}")
+                    logger.error(f"Error processing category {task['label']}: {e}")
                     return {
                         'label': task['label'], 
                         'category': task['category'],
@@ -169,7 +168,6 @@ class Enricher:
                                 "total": result['total'],
                                 "message": f"Enriched {result['enriched']}/{result['total']} {result['label']} documents"
                             })
-                            logger.info(f"✓ Appended enrichment event for {result['category']} with enriched={result['enriched']}, total={result['total']}")
                     except Exception as e:
                         logger.error(f"Error appending enrichment completion event: {e}")
 
@@ -182,5 +180,5 @@ class Enricher:
         try:
             return await self.enrich_data(state)
         except Exception as e:
-            print(f"Error in enrichment process: {e}")
+            logger.error(f"Error in enrichment process: {e}")
             return state

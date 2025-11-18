@@ -98,7 +98,7 @@ class BaseResearcher:
                         logger.info(f"job_id={job_id}, job_id in job_status={job_id in job_status}")
                         if job_id in job_status:
                             job_status[job_id]["events"].append(event)
-                            logger.info(f"✓ Appended query_generating event to queue: {event.get('query', '')[:50]}")
+
                         else:
                             logger.warning(f"job_id {job_id} not found in job_status. Available keys: {list(job_status.keys())[:3]}")
                     except Exception as e:
@@ -127,7 +127,6 @@ class BaseResearcher:
                                 try:
                                     if job_id in job_status:
                                         job_status[job_id]["events"].append(event)
-                                        logger.info("✓ Appended query_generated event to queue")
                                     else:
                                         logger.warning(f"job_id {job_id} not found in job_status for query_generated")
                                 except Exception as e:
