@@ -1,0 +1,927 @@
+/opt/miniconda3/envs/company-research-agent/lib/python3.14/site-packages/langchain_core/_api/deprecation.py:26: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1.fields import FieldInfo as FieldInfoV1
+INFO:     Started server process [81768]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52993 - "OPTIONS /research HTTP/1.1" 200 OK
+Received research request for Stripe
+INFO:     127.0.0.1:52993 - "POST /research HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52993 - "GET /research/7d616923-f2e7-4f61-8318-3395468a028c/stream HTTP/1.1" 200 OK
+Starting research for Stripe
+Curator initialized with relevance threshold: 0.4
+Starting website analysis for https://stripe.com
+Initiating Tavily crawl
+HTTP Request: POST https://api.tavily.com/crawl "HTTP/1.1 200 OK"
+Successfully crawled 1 pages from website
+=== GENERATE_QUERIES START: job_id=7d616923-f2e7-4f61-8318-3395468a028c, analyst=company_analyzer ===
+Generating queries for Stripe as company_analyzer, job_id=7d616923-f2e7-4f61-8318-3395468a028c
+=== GENERATE_QUERIES START: job_id=7d616923-f2e7-4f61-8318-3395468a028c, analyst=financial_analyzer ===
+Generating queries for Stripe as financial_analyzer, job_id=7d616923-f2e7-4f61-8318-3395468a028c
+=== GENERATE_QUERIES START: job_id=7d616923-f2e7-4f61-8318-3395468a028c, analyst=industry_analyzer ===
+Generating queries for Stripe as industry_analyzer, job_id=7d616923-f2e7-4f61-8318-3395468a028c
+=== GENERATE_QUERIES START: job_id=7d616923-f2e7-4f61-8318-3395468a028c, analyst=news_analyzer ===
+Generating queries for Stripe as news_analyzer, job_id=7d616923-f2e7-4f61-8318-3395468a028c
+HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company announcements
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company announcements November
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company announcements November 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company announcements November 202
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company announcements November 2025
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe recent company announcements November 2025 
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 202
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 2025
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 2025 new
+HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 2025 new products
+HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 2025 new products and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 2025 new products and featur
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe press releases 2025 new products and featur
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships and collaborations
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships and collaborations 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships and collaborations 202
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships and collaborations 2025
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe new partnerships and collaborations 2025  
+
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe Financial Technology company updates fundin
+Final queries for news_analyzer: ['Stripe recent company announcements November 2025', 'Stripe press releases 2025 new products and features', 'Stripe new partnerships and collaborations 2025', 'Stripe Financial Technology company updates funding expansion 2025']
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial analysis fundraising history valu
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company fundamentals core products and serv
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe financial statements key metrics revenue gr
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe company history major milestones funding ro
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe leadership team executive biographies and o
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe revenue and profit sources breakdown by pro
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe industry position in the Financial Technolo
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+Final queries for financial_analyzer: ['Stripe financial analysis fundraising history valuation rounds and latest valuation figures 2025', 'Stripe financial statements key metrics revenue growth operating income margins 2025', 'Stripe revenue and profit sources breakdown by products geographies and customer segments', 'Stripe industry position in the Financial Technology industry competitive financial performance benchmarking']
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe business model revenue streams pricing stra
+Final queries for company_analyzer: ['Stripe company fundamentals core products and services in the Financial Technology industry 2025', 'Stripe company history major milestones funding rounds and expansions in the Financial Technology industry', 'Stripe leadership team executive biographies and organizational structure in the Financial Technology industry', 'Stripe business model revenue streams pricing strategy and competitive positioning in the Financial Technology industry']
+HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: 
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market position in the Financial Technology
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation within
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation within
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation within
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation within
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation within
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe main competitors and differentiation within
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe-specific Financial Technology industry tren
+✓ Appended query_generated event to queue
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+job_id=7d616923-f2e7-4f61-8318-3395468a028c, job_id in job_status=True
+✓ Appended query_generating event to queue: Stripe market size exposure and growth outlook wit
+Final queries for industry_analyzer: ['Stripe market position in the Financial Technology industry 2025', 'Stripe main competitors and differentiation within the Financial Technology industry', 'Stripe-specific Financial Technology industry trends and challenges impacting its business model', 'Stripe market size exposure and growth outlook within the Financial Technology industry']
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+Cleaned title from 'Stripe's Value Jumps to $95 Billion, Becomes Top U.S. ...' to 'Stripe's Value Jumps to $95 Billion, Becomes Top U.S.'
+Cleaned title from 'Stripe's Valuation Rises Above Its 2021 Peak to $106.7 ...' to 'Stripe's Valuation Rises Above Its 2021 Peak to $106.7'
+Cleaned title from 'Stripe hits a $91 billion valuation amid 'lumpy' payments ...' to 'Stripe hits a $91 billion valuation amid 'lumpy' payments'
+Cleaned title from 'PayPal Predicts Earnings Growth as Firm Streamlines ...' to 'PayPal Predicts Earnings Growth as Firm Streamlines'
+Cleaned title from 'Remitly Global, Inc. (RELY) Q3 FY2025 earnings call ...' to 'Remitly Global, Inc. (RELY) Q3 FY2025 earnings call'
+Cleaned title from 'Coinbase Global Inc. R (1QZ.DE) Q3 FY2025 earnings call ...' to 'Coinbase Global Inc. R (1QZ.DE) Q3 FY2025 earnings call'
+Cleaned title from '[Latest] Global Digital Payment in Healthcare Market Size ...' to '[Latest] Global Digital Payment in Healthcare Market Size'
+Cleaned title from 'Global Payment Gateway Market Size, Share & Industry ...' to 'Global Payment Gateway Market Size, Share & Industry'
+Cleaned title from 'EARNINGS_CALL_TRANSCRIP...' to 'EARNINGS_CALL_TRANSCRIP'
+Cleaned title from 'Payoneer Global Inc. (PAYO) Q2 FY2025 earnings call ...' to 'Payoneer Global Inc. (PAYO) Q2 FY2025 earnings call'
+Cleaned title from 'FinTech Marketplace Forecast Report 2025-2030, with ...' to 'FinTech Marketplace Forecast Report 2025-2030, with'
+Cleaned title from 'Jim Cramer on Block, Inc. (XYZ): 'Square's Had Problems ...' to 'Jim Cramer on Block, Inc. (XYZ): 'Square's Had Problems'
+Cleaned title from '[Latest] Global Payment Orchestration Platform Market Size ...' to '[Latest] Global Payment Orchestration Platform Market Size'
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+Cleaned title from 'The 12 Best Alternatives to Stripe, Square, PayPal, and other Big ...' to 'The 12 Best Alternatives to Stripe, Square, PayPal, and other Big'
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+Cleaned title from 'REPORT - India-Russia Pharmaceutical Corridor 2025 : Forging...' to 'REPORT - India-Russia Pharmaceutical Corridor 2025 : Forging'
+Starting curation for company: Stripe, job_id=7d616923-f2e7-4f61-8318-3395468a028c
+Evaluating 21 documents
+Document kept (company website) for 'No title')
+Document kept (score 0.9197) for 'Stripe (STRI.PVT) Valuation, History & News')
+Document kept (score 0.5188) for 'Stripe's Value Jumps to $95 Billion, Becomes Top U.S.')
+Document kept (score 0.4102) for 'Stripe's Valuation Rises Above Its 2021 Peak to $106.7')
+Document below threshold with score 0.3713 for 'Stripe Boosts Valuation to $91.5 Billion Through Tender Offer'
+Document below threshold with score 0.3379 for 'Stripe hits a $91 billion valuation amid 'lumpy' payments'
+Document below threshold with score 0.0510 for 'PayPal Predicts Earnings Growth as Firm Streamlines'
+Document below threshold with score 0.0278 for 'How Circle Can 3x Its Revenues'
+Document below threshold with score 0.0216 for 'Visa Inc. (V) Q4 FY2025 earnings call transcript'
+Document below threshold with score 0.0194 for 'Remitly Global, Inc. (RELY) Q3 FY2025 earnings call'
+Document below threshold with score 0.0191 for 'Coinbase Global Inc. R (1QZ.DE) Q3 FY2025 earnings call'
+Document below threshold with score 0.1568 for '[Latest] Global Digital Payment in Healthcare Market Size'
+Document below threshold with score 0.0496 for 'Global Payment Gateway Market Size, Share & Industry'
+Document below threshold with score 0.0262 for 'Mastercard Inc. (M4I.SG) Q1 FY2025 earnings call transcript'
+Document below threshold with score 0.0232 for 'EARNINGS_CALL_TRANSCRIP'
+Document below threshold with score 0.0204 for 'Payoneer Global Inc. (PAYO) Q2 FY2025 earnings call'
+Document kept (score 0.9848) for 'Financial Analysis for 0P00011MOA.SW')
+Document kept (score 0.4423) for 'FinTech Marketplace Forecast Report 2025-2030, with')
+Document below threshold with score 0.1866 for 'Jim Cramer on Block, Inc. (XYZ): 'Square's Had Problems'
+Document below threshold with score 0.1854 for 'Face-swiping Payment Market Forecast Report 2025-2030'
+Document below threshold with score 0.1439 for '[Latest] Global Payment Orchestration Platform Market Size'
+Returning 6 evaluated documents
+Attempting to append curation event for financial: job_id=7d616923-f2e7-4f61-8318-3395468a028c, in job_status=True, total=6
+✓ Appended curation event for financial with total=6
+Kept 6 documents for financial with scores above threshold
+Evaluating 18 documents
+Document kept (company website) for 'No title')
+Document kept (score 0.4881) for 'Corporate update relating to winter 2026 drilling expedition – Company Announcement - Financial Times')
+Document below threshold with score 0.1352 for 'Sterling Solutions Marks Manufacturing Milestone: 1 Million TerraLam® Access Mats Produced - The Manila Times'
+Document below threshold with score 0.1760 for 'Challenges and Opportunities in Scaling European Tech Startups - Startup Ecosystem Canada'
+Document below threshold with score 0.3056 for 'AcePower Partners with IMECAR to Accelerate Turkey’s EV Charging Infrastructure - CleanTechnica'
+Document below threshold with score 0.2270 for 'INTAMSYS Launches the FUNMAT PRO 310 APOLLO: Redefining Continuous Production with High-Speed, High-Strength PAEK 3D Printing - The Manila Times'
+Document below threshold with score 0.1132 for 'Apple Exploring Touch-Sensitive Layers Built Into Official iPhone Cases - MacRumors'
+Document below threshold with score 0.1011 for 'Iranian Forces Illegally Seize Commercial Tanker in International Waters - centcom.mil'
+Document below threshold with score 0.0874 for 'Blue Origin Successfully Lands Its New Glenn Rocket Booster for the First Time - CNET'
+Document kept (score 0.5015) for 'Global Humanities Foundation to Launch Agricultural & Wellness Partnerships in Indonesia - NEWS CHANNEL NEBRASKA- Northeast')
+Document kept (score 0.4053) for 'Grapevine, November 16, 2025: The Germans are coming - The Jerusalem Post')
+Document below threshold with score 0.2711 for 'Acquisitions & Partnerships: Industry consolidation fuels expansion across trucking and transportation sectors - FleetOwner'
+Document below threshold with score 0.1837 for 'Breaking Barriers and Crossing Borders: JCR Pharma Launches into Next 50 Years of Innovation with Global Alliances - Fierce Biotech'
+Document below threshold with score 0.1737 for 'Deep Dive: How Worldline Is Trying to Rebuild — Without a Full Recovery (Yet): By Sam Boboev - Finextra Research'
+Document below threshold with score 0.1388 for 'Zilch secures $175m raise ahead of potential 2026 IPO - FinTech Futures'
+Document below threshold with score 0.1072 for 'Top 10: Financial Services Companies in the United States - FinTech Magazine'
+Document below threshold with score 0.0661 for 'a16z leads $21M Series A into AI-native tax compliance software Sphere - TechCrunch'
+Document below threshold with score 0.0493 for 'Skims valued at $5 billion after new funding round as it accelerates store expansion - CNBC'
+Returning 4 evaluated documents
+Attempting to append curation event for news: job_id=7d616923-f2e7-4f61-8318-3395468a028c, in job_status=True, total=4
+✓ Appended curation event for news with total=4
+Kept 4 documents for news with scores above threshold
+Evaluating 18 documents
+Document kept (company website) for 'No title')
+Document kept (score 0.5111) for 'Payments Giant Stripe Nabs 10th in Top 100 FinTech Companies')
+Document kept (score 0.8732) for 'Stripe Statistics 2025: Usage, Revenue, and Market Share - CoinLaw')
+Document kept (score 0.7382) for 'The Future Of Payments: Fintech 50 2025 - Forbes')
+Document kept (score 0.4930) for 'Stripe Business Breakdown & Founding Story - Contrary Research')
+Document kept (score 0.4183) for 'Stripe Stats for 2025: The Most Accurate Stripe Statistics Online')
+Document kept (score 0.5317) for 'Top 5 Stripe Superior Competitors for Businesses - DashDevs')
+Document kept (score 0.5220) for 'Top 5 Stripe Alternatives & Competitors in the US 2025 - Airwallex')
+Document kept (score 0.5174) for '8 Best Stripe Competitors for Small Businesses of November 2025')
+Document kept (score 0.4236) for 'The 12 Best Alternatives to Stripe, Square, PayPal, and other Big')
+Document below threshold with score 0.2266 for 'Adyen vs. Stripe: Which Payment Giant Wins? - HubiFi'
+Document kept (score 0.5257) for 'Startup industry trends for 2025: What founders need to know - Stripe')
+Document kept (score 0.4857) for 'Stripe's Limitations: When to Consider Other Payment Solutions')
+Document kept (score 0.4654) for 'Payment trends that are transforming how customers pay - Stripe')
+Document kept (score 0.4516) for 'Stripe, Inc. — A Comprehensive Report | by ByteBridge - Medium')
+Document kept (score 0.8074) for 'Stripe Company Profile - Platform for Private Market Investing')
+Document kept (score 0.7479) for 'Invest in Stripe: Private Investment Guide')
+Document kept (score 0.6318) for 'Stripe Market Share 2025: Global vs U.S. Breakdown')
+Returning 17 evaluated documents
+Attempting to append curation event for industry: job_id=7d616923-f2e7-4f61-8318-3395468a028c, in job_status=True, total=17
+✓ Appended curation event for industry with total=17
+Kept 17 documents for industry with scores above threshold
+Evaluating 20 documents
+Document below threshold with score 0.1039 for 'Stripe | Financial Infrastructure to Grow Your Revenue'
+Document kept (score 0.6834) for 'Sessions 2025 - Stripe')
+Document kept (score 0.6097) for 'All our product updates from Stripe Tour New York')
+Document kept (score 0.4355) for 'Overview of compliance fundamentals for fintechs in the US - Stripe')
+Document kept (score 0.4134) for 'Startup industry trends for 2025: What founders need to know - Stripe')
+Document kept (score 0.4006) for 'Startup industry trends for 2025: What founders need to know - Stripe')
+Document kept (score 0.6644) for 'Stripe | LinkedIn')
+Document below threshold with score 0.2908 for 'Stripe , Inc. - Wikipedia'
+Document below threshold with score 0.0217 for 'The Crypto Industry ’s $28 Billion in ‘Dirty Money’ - The New York Times'
+Document below threshold with score 0.0153 for 'REPORT - India-Russia Pharmaceutical Corridor 2025 : Forging'
+Document kept (score 0.7512) for 'Leadership Team - Stripe - The Org')
+Document kept (score 0.7164) for '10 Stripe Executives & Org Chart - Clay')
+Document kept (score 0.5071) for 'Stripe Executive Team - Comparably')
+Document kept (score 0.4939) for 'Building the executive team - Stripe')
+Document kept (score 0.4396) for 'Stripe IncExecutive & Employee Information - GlobalData')
+Document kept (score 0.6332) for 'Stripe Statistics 2025: Usage, Revenue, and Market Share - CoinLaw')
+Document kept (score 0.5160) for 'Stripe Market Share 2025: Global vs U.S. Breakdown')
+Document kept (score 0.4685) for 'A guide to competitive pricing strategies - Stripe')
+Document kept (score 0.4600) for 'Stripe Business Model & Revenue | Building Fintech Apps - InfoStride')
+Document kept (score 0.4567) for 'Stripe Stats for 2025: The Most Accurate Stripe Statistics Online')
+Returning 16 evaluated documents
+Attempting to append curation event for company: job_id=7d616923-f2e7-4f61-8318-3395468a028c, in job_status=True, total=16
+✓ Appended curation event for company with total=16
+Kept 16 documents for company with scores above threshold
+Starting to process references from search results
+Found reference in curated_company_data: URL=https://theorg.com/org/stripe/teams/leadership-team-1, Score=0.7512
+Found reference in curated_company_data: URL=https://www.clay.com/dossier/stripe-executives, Score=0.7164
+Found reference in curated_company_data: URL=https://stripe.com/sessions/2025, Score=0.6834
+Found reference in curated_company_data: URL=https://www.linkedin.com/company/stripe, Score=0.6644
+Found reference in curated_company_data: URL=https://coinlaw.io/stripe-statistics/, Score=0.6332
+Found reference in curated_company_data: URL=https://stripe.com/blog/all-our-product-updates-from-stripe-tour-new-york, Score=0.6097
+Found reference in curated_company_data: URL=https://redstagfulfillment.com/what-is-the-market-share-of-stripe/, Score=0.5160
+Found reference in curated_company_data: URL=https://www.comparably.com/companies/stripe/executive-team, Score=0.5071
+Found reference in curated_company_data: URL=https://stripe.com/guides/atlas/building-the-executive-team, Score=0.4939
+Found reference in curated_company_data: URL=https://stripe.com/resources/more/competitors-pricing-strategies, Score=0.4685
+Found reference in curated_company_data: URL=https://infostride.com/stripe-business-and-revenue-models/, Score=0.4600
+Found reference in curated_company_data: URL=https://www.chargeflow.io/blog/stripe-statistics, Score=0.4567
+Found reference in curated_company_data: URL=https://www.globaldata.com/company-profile/stripe-inc/executives/, Score=0.4396
+Found reference in curated_company_data: URL=https://stripe.com/guides/overview-of-compliance-fundamentals-for-fintechs-in-us, Score=0.4355
+Found reference in curated_company_data: URL=https://stripe.com/en-jp/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know, Score=0.4134
+Found reference in curated_company_data: URL=https://stripe.com/ie/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know, Score=0.4006
+Found reference in curated_industry_data: URL=https://coinlaw.io/stripe-statistics/, Score=0.8732
+Found reference in curated_industry_data: URL=https://www.rainmakersecurities.com/company-profiles/stripe, Score=0.8074
+Found reference in curated_industry_data: URL=https://tsginvest.com/stripe/, Score=0.7479
+Found reference in curated_industry_data: URL=https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025/, Score=0.7382
+Found reference in curated_industry_data: URL=https://redstagfulfillment.com/what-is-the-market-share-of-stripe/, Score=0.6318
+Found reference in curated_industry_data: URL=https://dashdevs.com/blog/stripe-competitors/, Score=0.5317
+Found reference in curated_industry_data: URL=https://stripe.com/en-jp/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know, Score=0.5257
+Found reference in curated_industry_data: URL=https://www.airwallex.com/us/blog/stripe-alternatives-and-competitors, Score=0.5220
+Found reference in curated_industry_data: URL=https://www.nerdwallet.com/business/software/best/stripe-competitors, Score=0.5174
+Found reference in curated_industry_data: URL=https://fintechmagazine.com/news/payments-giant-stripe-nabs-10th-in-top-100-fintech-companies, Score=0.5111
+Found reference in curated_industry_data: URL=https://research.contrary.com/company/stripe, Score=0.4930
+Found reference in curated_industry_data: URL=https://www.clearfunction.com/insights/when-stripe-isnt-the-solution-uncovering-its-limitations-and-shortcomings, Score=0.4857
+Found reference in curated_industry_data: URL=https://stripe.com/resources/more/payment-trends-that-are-transforming-how-customers-pay-and-how-companies-get-paid, Score=0.4654
+Found reference in curated_industry_data: URL=https://bytebridge.medium.com/stripe-inc-a-comprehensive-report-d6c422b66ce1, Score=0.4516
+Found reference in curated_industry_data: URL=https://businessleadershiptoday.com/stripe-competitors-alternatives-to-stripe-square-paypal/, Score=0.4236
+Found reference in curated_industry_data: URL=https://www.chargeflow.io/blog/stripe-statistics, Score=0.4183
+Found reference in curated_industry_data: URL=https://stripe.com/, Score=0.0000
+Found reference in curated_financial_data: URL=https://finance.yahoo.com/quote/0P00011MOA.SW/, Score=0.9848
+Found reference in curated_financial_data: URL=https://finance.yahoo.com/quote/STRI.PVT/, Score=0.9197
+Found reference in curated_financial_data: URL=https://www.bloomberg.com/news/articles/2021-03-14/stripe-raises-600-million-valuing-company-at-95-billion, Score=0.5188
+Found reference in curated_financial_data: URL=https://finance.yahoo.com/news/fintech-marketplace-forecast-report-2025-095100433.html, Score=0.4423
+Found reference in curated_financial_data: URL=https://www.bloomberg.com/news/articles/2025-09-23/stripe-s-valuation-rises-above-its-2021-peak-to-106-7-billion, Score=0.4102
+Found reference in curated_financial_data: URL=https://stripe.com/, Score=0.0000
+Found reference in curated_news_data: URL=https://northeast.newschannelnebraska.com/story/53250045/global-humanities-foundation-to-launch-agricultural-wellness-partnerships-in-indonesia, Score=0.5015
+Found reference in curated_news_data: URL=https://markets.ft.com/data/announce/detail, Score=0.4881
+Found reference in curated_news_data: URL=https://www.jpost.com/opinion/article-873927, Score=0.4053
+Found reference in curated_news_data: URL=https://stripe.com/, Score=0.0000
+Collected a total of 43 references before deduplication
+Top 20 references by score before deduplication:
+1. Score: 0.9848 - URL: https://finance.yahoo.com/quote/0P00011MOA.SW/
+2. Score: 0.9197 - URL: https://finance.yahoo.com/quote/STRI.PVT/
+3. Score: 0.8732 - URL: https://coinlaw.io/stripe-statistics/
+4. Score: 0.8074 - URL: https://www.rainmakersecurities.com/company-profiles/stripe
+5. Score: 0.7512 - URL: https://theorg.com/org/stripe/teams/leadership-team-1
+6. Score: 0.7479 - URL: https://tsginvest.com/stripe/
+7. Score: 0.7382 - URL: https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025/
+8. Score: 0.7164 - URL: https://www.clay.com/dossier/stripe-executives
+9. Score: 0.6834 - URL: https://stripe.com/sessions/2025
+10. Score: 0.6644 - URL: https://www.linkedin.com/company/stripe
+11. Score: 0.6332 - URL: https://coinlaw.io/stripe-statistics/
+12. Score: 0.6318 - URL: https://redstagfulfillment.com/what-is-the-market-share-of-stripe/
+13. Score: 0.6097 - URL: https://stripe.com/blog/all-our-product-updates-from-stripe-tour-new-york
+14. Score: 0.5317 - URL: https://dashdevs.com/blog/stripe-competitors/
+15. Score: 0.5257 - URL: https://stripe.com/en-jp/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know
+16. Score: 0.5220 - URL: https://www.airwallex.com/us/blog/stripe-alternatives-and-competitors
+17. Score: 0.5188 - URL: https://www.bloomberg.com/news/articles/2021-03-14/stripe-raises-600-million-valuing-company-at-95-billion
+18. Score: 0.5174 - URL: https://www.nerdwallet.com/business/software/best/stripe-competitors
+19. Score: 0.5160 - URL: https://redstagfulfillment.com/what-is-the-market-share-of-stripe/
+20. Score: 0.5111 - URL: https://fintechmagazine.com/news/payments-giant-stripe-nabs-10th-in-top-100-fintech-companies
+Found title for URL https://finance.yahoo.com/quote/0P00011MOA.SW/: 'Financial Analysis for 0P00011MOA.SW'
+Stored reference info for https://finance.yahoo.com/quote/0P00011MOA.SW with score 0.9848
+Found title for URL https://finance.yahoo.com/quote/STRI.PVT/: 'Stripe (STRI.PVT) Valuation, History & News'
+Stored reference info for https://finance.yahoo.com/quote/STRI.PVT with score 0.9197
+Found title for URL https://coinlaw.io/stripe-statistics/: 'Stripe Statistics 2025: Usage, Revenue, and Market Share - CoinLaw'
+Stored reference info for https://coinlaw.io/stripe-statistics with score 0.8732
+Found title for URL https://www.rainmakersecurities.com/company-profiles/stripe: 'Stripe Company Profile - Platform for Private Market Investing'
+Stored reference info for https://www.rainmakersecurities.com/company-profiles/stripe with score 0.8074
+Found title for URL https://theorg.com/org/stripe/teams/leadership-team-1: 'Leadership Team - Stripe - The Org'
+Stored reference info for https://theorg.com/org/stripe/teams/leadership-team-1 with score 0.7512
+Found title for URL https://tsginvest.com/stripe/: 'Invest in Stripe: Private Investment Guide'
+Stored reference info for https://tsginvest.com/stripe with score 0.7479
+Found title for URL https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025/: 'The Future Of Payments: Fintech 50 2025 - Forbes'
+Stored reference info for https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025 with score 0.7382
+Found title for URL https://www.clay.com/dossier/stripe-executives: '10 Stripe Executives & Org Chart - Clay'
+Stored reference info for https://www.clay.com/dossier/stripe-executives with score 0.7164
+Found title for URL https://stripe.com/sessions/2025: 'Sessions 2025 - Stripe'
+Stored reference info for https://stripe.com/sessions/2025 with score 0.6834
+Found title for URL https://www.linkedin.com/company/stripe: 'Stripe | LinkedIn'
+Stored reference info for https://www.linkedin.com/company/stripe with score 0.6644
+Found title for URL https://redstagfulfillment.com/what-is-the-market-share-of-stripe/: 'Stripe Market Share 2025: Global vs U.S. Breakdown'
+Stored reference info for https://redstagfulfillment.com/what-is-the-market-share-of-stripe with score 0.6318
+Found title for URL https://stripe.com/blog/all-our-product-updates-from-stripe-tour-new-york: 'All our product updates from Stripe Tour New York'
+Stored reference info for https://stripe.com/blog/all-our-product-updates-from-stripe-tour-new-york with score 0.6097
+Found title for URL https://dashdevs.com/blog/stripe-competitors/: 'Top 5 Stripe Superior Competitors for Businesses - DashDevs'
+Stored reference info for https://dashdevs.com/blog/stripe-competitors with score 0.5317
+Found title for URL https://stripe.com/en-jp/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know: 'Startup industry trends for 2025: What founders need to know - Stripe'
+Stored reference info for https://stripe.com/en-jp/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know with score 0.5257
+Found title for URL https://www.airwallex.com/us/blog/stripe-alternatives-and-competitors: 'Top 5 Stripe Alternatives & Competitors in the US 2025 - Airwallex'
+Stored reference info for https://www.airwallex.com/us/blog/stripe-alternatives-and-competitors with score 0.5220
+Cleaned title from 'Stripe's Value Jumps to $95 Billion, Becomes Top U.S.' to 'Stripe's Value Jumps to $95 Billion, Becomes Top U.S'
+Found title for URL https://www.bloomberg.com/news/articles/2021-03-14/stripe-raises-600-million-valuing-company-at-95-billion: 'Stripe's Value Jumps to $95 Billion, Becomes Top U.S'
+Stored reference info for https://www.bloomberg.com/news/articles/2021-03-14/stripe-raises-600-million-valuing-company-at-95-billion with score 0.5188
+Found title for URL https://www.nerdwallet.com/business/software/best/stripe-competitors: '8 Best Stripe Competitors for Small Businesses of November 2025'
+Stored reference info for https://www.nerdwallet.com/business/software/best/stripe-competitors with score 0.5174
+Found title for URL https://fintechmagazine.com/news/payments-giant-stripe-nabs-10th-in-top-100-fintech-companies: 'Payments Giant Stripe Nabs 10th in Top 100 FinTech Companies'
+Stored reference info for https://fintechmagazine.com/news/payments-giant-stripe-nabs-10th-in-top-100-fintech-companies with score 0.5111
+Found title for URL https://www.comparably.com/companies/stripe/executive-team: 'Stripe Executive Team - Comparably'
+Stored reference info for https://www.comparably.com/companies/stripe/executive-team with score 0.5071
+Found title for URL https://northeast.newschannelnebraska.com/story/53250045/global-humanities-foundation-to-launch-agricultural-wellness-partnerships-in-indonesia: 'Global Humanities Foundation to Launch Agricultural & Wellness Partnerships in Indonesia - NEWS CHANNEL NEBRASKA- Northeast'
+Stored reference info for https://northeast.newschannelnebraska.com/story/53250045/global-humanities-foundation-to-launch-agricultural-wellness-partnerships-in-indonesia with score 0.5015
+Found title for URL https://stripe.com/guides/atlas/building-the-executive-team: 'Building the executive team - Stripe'
+Stored reference info for https://stripe.com/guides/atlas/building-the-executive-team with score 0.4939
+Found title for URL https://research.contrary.com/company/stripe: 'Stripe Business Breakdown & Founding Story - Contrary Research'
+Stored reference info for https://research.contrary.com/company/stripe with score 0.4930
+Found title for URL https://markets.ft.com/data/announce/detail: 'Corporate update relating to winter 2026 drilling expedition – Company Announcement - Financial Times'
+Stored reference info for https://markets.ft.com/data/announce/detail with score 0.4881
+Found title for URL https://www.clearfunction.com/insights/when-stripe-isnt-the-solution-uncovering-its-limitations-and-shortcomings: 'Stripe's Limitations: When to Consider Other Payment Solutions'
+Stored reference info for https://www.clearfunction.com/insights/when-stripe-isnt-the-solution-uncovering-its-limitations-and-shortcomings with score 0.4857
+Found title for URL https://stripe.com/resources/more/competitors-pricing-strategies: 'A guide to competitive pricing strategies - Stripe'
+Stored reference info for https://stripe.com/resources/more/competitors-pricing-strategies with score 0.4685
+Found title for URL https://stripe.com/resources/more/payment-trends-that-are-transforming-how-customers-pay-and-how-companies-get-paid: 'Payment trends that are transforming how customers pay - Stripe'
+Stored reference info for https://stripe.com/resources/more/payment-trends-that-are-transforming-how-customers-pay-and-how-companies-get-paid with score 0.4654
+Found title for URL https://infostride.com/stripe-business-and-revenue-models/: 'Stripe Business Model & Revenue | Building Fintech Apps - InfoStride'
+Stored reference info for https://infostride.com/stripe-business-and-revenue-models with score 0.4600
+Found title for URL https://www.chargeflow.io/blog/stripe-statistics: 'Stripe Stats for 2025: The Most Accurate Stripe Statistics Online'
+Stored reference info for https://www.chargeflow.io/blog/stripe-statistics with score 0.4567
+Found title for URL https://bytebridge.medium.com/stripe-inc-a-comprehensive-report-d6c422b66ce1: 'Stripe, Inc. — A Comprehensive Report | by ByteBridge - Medium'
+Stored reference info for https://bytebridge.medium.com/stripe-inc-a-comprehensive-report-d6c422b66ce1 with score 0.4516
+Found title for URL https://finance.yahoo.com/news/fintech-marketplace-forecast-report-2025-095100433.html: 'FinTech Marketplace Forecast Report 2025-2030, with'
+Stored reference info for https://finance.yahoo.com/news/fintech-marketplace-forecast-report-2025-095100433.html with score 0.4423
+Found title for URL https://www.globaldata.com/company-profile/stripe-inc/executives/: 'Stripe IncExecutive & Employee Information - GlobalData'
+Stored reference info for https://www.globaldata.com/company-profile/stripe-inc/executives with score 0.4396
+Found title for URL https://stripe.com/guides/overview-of-compliance-fundamentals-for-fintechs-in-us: 'Overview of compliance fundamentals for fintechs in the US - Stripe'
+Stored reference info for https://stripe.com/guides/overview-of-compliance-fundamentals-for-fintechs-in-us with score 0.4355
+Found title for URL https://businessleadershiptoday.com/stripe-competitors-alternatives-to-stripe-square-paypal/: 'The 12 Best Alternatives to Stripe, Square, PayPal, and other Big'
+Stored reference info for https://businessleadershiptoday.com/stripe-competitors-alternatives-to-stripe-square-paypal with score 0.4236
+Found title for URL https://www.bloomberg.com/news/articles/2025-09-23/stripe-s-valuation-rises-above-its-2021-peak-to-106-7-billion: 'Stripe's Valuation Rises Above Its 2021 Peak to $106.7'
+Stored reference info for https://www.bloomberg.com/news/articles/2025-09-23/stripe-s-valuation-rises-above-its-2021-peak-to-106-7-billion with score 0.4102
+Found title for URL https://www.jpost.com/opinion/article-873927: 'Grapevine, November 16, 2025: The Germans are coming - The Jerusalem Post'
+Stored reference info for https://www.jpost.com/opinion/article-873927 with score 0.4053
+Found title for URL https://stripe.com/ie/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know: 'Startup industry trends for 2025: What founders need to know - Stripe'
+Stored reference info for https://stripe.com/ie/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know with score 0.4006
+No valid title found for URL https://stripe.com/
+Stored reference info for https://stripe.com with score 0.0000
+Found 37 unique references after deduplication
+Unique references by score (sorted):
+1. Score: 0.9848 - URL: https://finance.yahoo.com/quote/0P00011MOA.SW
+2. Score: 0.9197 - URL: https://finance.yahoo.com/quote/STRI.PVT
+3. Score: 0.8732 - URL: https://coinlaw.io/stripe-statistics
+4. Score: 0.8074 - URL: https://www.rainmakersecurities.com/company-profiles/stripe
+5. Score: 0.7512 - URL: https://theorg.com/org/stripe/teams/leadership-team-1
+6. Score: 0.7479 - URL: https://tsginvest.com/stripe
+7. Score: 0.7382 - URL: https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025
+8. Score: 0.7164 - URL: https://www.clay.com/dossier/stripe-executives
+9. Score: 0.6834 - URL: https://stripe.com/sessions/2025
+10. Score: 0.6644 - URL: https://www.linkedin.com/company/stripe
+11. Score: 0.6318 - URL: https://redstagfulfillment.com/what-is-the-market-share-of-stripe
+12. Score: 0.6097 - URL: https://stripe.com/blog/all-our-product-updates-from-stripe-tour-new-york
+13. Score: 0.5317 - URL: https://dashdevs.com/blog/stripe-competitors
+14. Score: 0.5257 - URL: https://stripe.com/en-jp/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know
+15. Score: 0.5220 - URL: https://www.airwallex.com/us/blog/stripe-alternatives-and-competitors
+16. Score: 0.5188 - URL: https://www.bloomberg.com/news/articles/2021-03-14/stripe-raises-600-million-valuing-company-at-95-billion
+17. Score: 0.5174 - URL: https://www.nerdwallet.com/business/software/best/stripe-competitors
+18. Score: 0.5111 - URL: https://fintechmagazine.com/news/payments-giant-stripe-nabs-10th-in-top-100-fintech-companies
+19. Score: 0.5071 - URL: https://www.comparably.com/companies/stripe/executive-team
+20. Score: 0.5015 - URL: https://northeast.newschannelnebraska.com/story/53250045/global-humanities-foundation-to-launch-agricultural-wellness-partnerships-in-indonesia
+21. Score: 0.4939 - URL: https://stripe.com/guides/atlas/building-the-executive-team
+22. Score: 0.4930 - URL: https://research.contrary.com/company/stripe
+23. Score: 0.4881 - URL: https://markets.ft.com/data/announce/detail
+24. Score: 0.4857 - URL: https://www.clearfunction.com/insights/when-stripe-isnt-the-solution-uncovering-its-limitations-and-shortcomings
+25. Score: 0.4685 - URL: https://stripe.com/resources/more/competitors-pricing-strategies
+26. Score: 0.4654 - URL: https://stripe.com/resources/more/payment-trends-that-are-transforming-how-customers-pay-and-how-companies-get-paid
+27. Score: 0.4600 - URL: https://infostride.com/stripe-business-and-revenue-models
+28. Score: 0.4567 - URL: https://www.chargeflow.io/blog/stripe-statistics
+29. Score: 0.4516 - URL: https://bytebridge.medium.com/stripe-inc-a-comprehensive-report-d6c422b66ce1
+30. Score: 0.4423 - URL: https://finance.yahoo.com/news/fintech-marketplace-forecast-report-2025-095100433.html
+31. Score: 0.4396 - URL: https://www.globaldata.com/company-profile/stripe-inc/executives
+32. Score: 0.4355 - URL: https://stripe.com/guides/overview-of-compliance-fundamentals-for-fintechs-in-us
+33. Score: 0.4236 - URL: https://businessleadershiptoday.com/stripe-competitors-alternatives-to-stripe-square-paypal
+34. Score: 0.4102 - URL: https://www.bloomberg.com/news/articles/2025-09-23/stripe-s-valuation-rises-above-its-2021-peak-to-106-7-billion
+35. Score: 0.4053 - URL: https://www.jpost.com/opinion/article-873927
+36. Score: 0.4006 - URL: https://stripe.com/ie/resources/more/startup-industry-trends-for-2025-what-founders-need-to-know
+37. Score: 0.0000 - URL: https://stripe.com
+Final top 10 references selected:
+1. Score: 0.9848 - URL: https://finance.yahoo.com/quote/0P00011MOA.SW
+2. Score: 0.9197 - URL: https://finance.yahoo.com/quote/STRI.PVT
+3. Score: 0.8732 - URL: https://coinlaw.io/stripe-statistics
+4. Score: 0.8074 - URL: https://www.rainmakersecurities.com/company-profiles/stripe
+5. Score: 0.7512 - URL: https://theorg.com/org/stripe/teams/leadership-team-1
+6. Score: 0.7479 - URL: https://tsginvest.com/stripe
+7. Score: 0.7382 - URL: https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025
+8. Score: 0.7164 - URL: https://www.clay.com/dossier/stripe-executives
+9. Score: 0.6834 - URL: https://stripe.com/sessions/2025
+10. Score: 0.6644 - URL: https://www.linkedin.com/company/stripe
+Selected top 10 references for the report
+Starting enrichment for company: Stripe, job_id=7d616923-f2e7-4f61-8318-3395468a028c
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.tavily.com/extract "HTTP/1.1 200 OK"
+✓ Appended enrichment event for financial with enriched=5, total=5
+✓ Appended enrichment event for news with enriched=3, total=3
+✓ Appended enrichment event for industry with enriched=16, total=16
+✓ Appended enrichment event for company with enriched=15, total=16
+Creating section briefings for Stripe
+Processing financial_data with 6 documents
+Processing news_data with 4 documents
+Processing industry_data with 17 documents
+Processing company_data with 16 documents
+Generating financial briefing for Stripe using 6 documents
+Sending prompt to LLM
+Generating news briefing for Stripe using 4 documents
+Sending prompt to LLM
+Completed news_data briefing (68 characters)
+Generating industry briefing for Stripe using 17 documents
+Sending prompt to LLM
+Completed financial_data briefing (1564 characters)
+Generating company briefing for Stripe using 16 documents
+Sending prompt to LLM
+Completed industry_data briefing (2866 characters)
+Completed company_data briefing (4901 characters)
+Generated 4/4 briefings with total length 9399
+Starting report compilation
+Found 10 references to add during compilation
+Formatting 10 references for the report
+Using title from reference_titles for https://finance.yahoo.com/quote/0P00011MOA.SW: ''
+No title found for https://finance.yahoo.com/quote/0P00011MOA.SW, using URL as title
+No website name found for https://finance.yahoo.com/quote/0P00011MOA.SW, extracted: Finance
+Created reference entry: {'website': 'Finance', 'title': 'https://finance.yahoo.com/quote/0P00011MOA.SW', 'url': 'https://finance.yahoo.com/quote/0P00011MOA.SW', 'domain': '', 'score': 0}
+Using title from reference_titles for https://finance.yahoo.com/quote/STRI.PVT: ''
+No title found for https://finance.yahoo.com/quote/STRI.PVT, using URL as title
+No website name found for https://finance.yahoo.com/quote/STRI.PVT, extracted: Finance
+Created reference entry: {'website': 'Finance', 'title': 'https://finance.yahoo.com/quote/STRI.PVT', 'url': 'https://finance.yahoo.com/quote/STRI.PVT', 'domain': '', 'score': 0}
+Using title from reference_titles for https://coinlaw.io/stripe-statistics: ''
+No title found for https://coinlaw.io/stripe-statistics, using URL as title
+No website name found for https://coinlaw.io/stripe-statistics, extracted: Coinlaw
+Created reference entry: {'website': 'Coinlaw', 'title': 'https://coinlaw.io/stripe-statistics', 'url': 'https://coinlaw.io/stripe-statistics', 'domain': '', 'score': 0}
+Using title from reference_titles for https://www.rainmakersecurities.com/company-profiles/stripe: ''
+No title found for https://www.rainmakersecurities.com/company-profiles/stripe, using URL as title
+No website name found for https://www.rainmakersecurities.com/company-profiles/stripe, extracted: Rainmakersecurities
+Created reference entry: {'website': 'Rainmakersecurities', 'title': 'https://www.rainmakersecurities.com/company-profiles/stripe', 'url': 'https://www.rainmakersecurities.com/company-profiles/stripe', 'domain': '', 'score': 0}
+Using title from reference_titles for https://theorg.com/org/stripe/teams/leadership-team-1: ''
+No title found for https://theorg.com/org/stripe/teams/leadership-team-1, using URL as title
+No website name found for https://theorg.com/org/stripe/teams/leadership-team-1, extracted: Theorg
+Created reference entry: {'website': 'Theorg', 'title': 'https://theorg.com/org/stripe/teams/leadership-team-1', 'url': 'https://theorg.com/org/stripe/teams/leadership-team-1', 'domain': '', 'score': 0}
+Using title from reference_titles for https://tsginvest.com/stripe: ''
+No title found for https://tsginvest.com/stripe, using URL as title
+No website name found for https://tsginvest.com/stripe, extracted: Tsginvest
+Created reference entry: {'website': 'Tsginvest', 'title': 'https://tsginvest.com/stripe', 'url': 'https://tsginvest.com/stripe', 'domain': '', 'score': 0}
+Using title from reference_titles for https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025: ''
+No title found for https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025, using URL as title
+No website name found for https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025, extracted: Forbes
+Created reference entry: {'website': 'Forbes', 'title': 'https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025', 'url': 'https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025', 'domain': '', 'score': 0}
+Using title from reference_titles for https://www.clay.com/dossier/stripe-executives: ''
+No title found for https://www.clay.com/dossier/stripe-executives, using URL as title
+No website name found for https://www.clay.com/dossier/stripe-executives, extracted: Clay
+Created reference entry: {'website': 'Clay', 'title': 'https://www.clay.com/dossier/stripe-executives', 'url': 'https://www.clay.com/dossier/stripe-executives', 'domain': '', 'score': 0}
+Using title from reference_titles for https://stripe.com/sessions/2025: ''
+No title found for https://stripe.com/sessions/2025, using URL as title
+No website name found for https://stripe.com/sessions/2025, extracted: Stripe
+Created reference entry: {'website': 'Stripe', 'title': 'https://stripe.com/sessions/2025', 'url': 'https://stripe.com/sessions/2025', 'domain': '', 'score': 0}
+Using title from reference_titles for https://www.linkedin.com/company/stripe: ''
+No title found for https://www.linkedin.com/company/stripe, using URL as title
+No website name found for https://www.linkedin.com/company/stripe, extracted: Linkedin
+Created reference entry: {'website': 'Linkedin', 'title': 'https://www.linkedin.com/company/stripe', 'url': 'https://www.linkedin.com/company/stripe', 'domain': '', 'score': 0}
+Maintaining reference order based on scores
+Added reference: * Finance. "Quote - 0p00011moa.sw." https://finance.yahoo.com/quote/0P00011MOA.SW
+Added reference: * Finance. "Quote - Stri.pvt." https://finance.yahoo.com/quote/STRI.PVT
+Added reference: * Coinlaw. "Stripe Statistics." https://coinlaw.io/stripe-statistics
+Added reference: * Rainmakersecurities. "Company Profiles - Stripe." https://www.rainmakersecurities.com/company-profiles/stripe
+Added reference: * Theorg. "Org - Stripe - Teams - Leadership Team 1." https://theorg.com/org/stripe/teams/leadership-team-1
+Added reference: * Tsginvest. "Stripe." https://tsginvest.com/stripe
+Added reference: * Forbes. "Sites - Martinacastellanos - 2025 - 02 - 18 - The Future Of Payments Fintech 50 2025." https://www.forbes.com/sites/martinacastellanos/2025/02/18/the-future-of-payments-fintech-50-2025
+Added reference: * Clay. "Dossier - Stripe Executives." https://www.clay.com/dossier/stripe-executives
+Added reference: * Stripe. "Sessions - 2025." https://stripe.com/sessions/2025
+Added reference: * Linkedin. "Company - Stripe." https://www.linkedin.com/company/stripe
+Completed references section with 10 entries
+Added 10 references during compilation
+HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+Final report compiled with 5961 characters
+Successfully compiled report with 5961 characters
+Research completed. Report length: 5961
+Research completed successfully for Stripe

@@ -206,7 +206,6 @@ async def stream_research(job_id: str):
                 # Send all queued events (FIFO - pop from start)
                 while events:
                     event = events.pop(0)
-                    logger.info(f"SSE: Sending event type={event.get('type')}")
                     data = json.dumps(event)
                     yield f"data: {data}\n\n"
                 

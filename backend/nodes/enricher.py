@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from typing import Dict, List
 
@@ -7,6 +8,8 @@ from tavily import AsyncTavilyClient
 
 from ..classes import ResearchState
 from ..classes.state import job_status
+
+logger = logging.getLogger(__name__)
 
 
 class Enricher:
@@ -63,6 +66,8 @@ class Enricher:
         """Enrich curated documents with raw content."""
         company = state.get('company', 'Unknown Company')
         job_id = state.get('job_id')
+
+        logger.info(f"Starting enrichment for company: {company}, job_id={job_id}")
         msg = [f"📚 Enriching curated data for {company}:"]
 
         # Process each type of curated data
@@ -93,9 +98,13 @@ class Enricher:
             
             msg.append(f"\n• Enriching {len(docs_needing_content)} {label} documents...")
 
+            # Extract category name from field (e.g., 'curated_financial_data' -> 'financial')
+            category = curated_field.replace('curated_', '').replace('_data', '')
+            
             enrichment_tasks.append({
                 'field': curated_field,
                 'label': label,
+                'category': category,
                 'docs': docs_needing_content,
                 'curated_docs': curated_docs
             })
@@ -127,17 +136,42 @@ class Enricher:
                     # Update state with enriched documents
                     state[task['field']] = task['curated_docs']
                     
-                    return {'label': task['label'], 'enriched': enriched_count, 'total': len(task['docs'])}
+                    return {
+                        'label': task['label'], 
+                        'category': task['category'],
+                        'enriched': enriched_count, 
+                        'total': len(task['docs'])
+                    }
                 except Exception as e:
                     print(f"Error processing category {task['label']}: {e}")
-                    return {'label': task['label'], 'enriched': 0, 'total': len(task['docs'])}
+                    return {
+                        'label': task['label'], 
+                        'category': task['category'],
+                        'enriched': 0, 
+                        'total': len(task['docs'])
+                    }
 
             # Process all categories in parallel
             results = await asyncio.gather(*[process_category(task) for task in enrichment_tasks])
             
-            # Add summary to message
+            # Add summary to message and emit enrichment completion events
             for result in results:
                 msg.append(f"\n  ✓ {result['label']}: {result['enriched']}/{result['total']} documents enriched")
+                
+                # Emit enrichment completion event for each category
+                if job_id:
+                    try:
+                        if job_id in job_status:
+                            job_status[job_id]["events"].append({
+                                "type": "enrichment",
+                                "category": result['category'],  # Use category instead of label
+                                "enriched": result['enriched'],
+                                "total": result['total'],
+                                "message": f"Enriched {result['enriched']}/{result['total']} {result['label']} documents"
+                            })
+                            logger.info(f"✓ Appended enrichment event for {result['category']} with enriched={result['enriched']}, total={result['total']}")
+                    except Exception as e:
+                        logger.error(f"Error appending enrichment completion event: {e}")
 
         # Update state with enrichment message
         state.setdefault('messages', []).append(AIMessage(content="\n".join(msg)))

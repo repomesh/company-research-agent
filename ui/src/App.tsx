@@ -4,6 +4,8 @@ import ResearchStatus from './components/ResearchStatus';
 import ResearchReport from './components/ResearchReport';
 import ResearchForm from './components/ResearchForm';
 import ResearchQueries from './components/ResearchQueries';
+import CurationExtraction from './components/CurationExtraction';
+import ResearchBriefings from './components/ResearchBriefings';
 import { ResearchOutput, ResearchStatusType } from './types';
 import { colorAnimation, dmSansStyle, glassStyle, fadeInAnimation } from './styles';
 
@@ -35,10 +37,35 @@ function App() {
   const [queries, setQueries] = useState<Array<{ text: string; number: number; category: string }>>([]);
   const [streamingQueries, setStreamingQueries] = useState<Record<string, { text: string; number: number; category: string; isComplete: boolean }>>({});
   const [isQueriesExpanded, setIsQueriesExpanded] = useState(true);
+  const [enrichmentCounts, setEnrichmentCounts] = useState<{
+    company: { total: number; enriched: number };
+    industry: { total: number; enriched: number };
+    financial: { total: number; enriched: number };
+    news: { total: number; enriched: number };
+  } | undefined>(undefined);
+  const [briefingStatus, setBriefingStatus] = useState({
+    company: false,
+    industry: false,
+    financial: false,
+    news: false
+  });
+  const [isEnrichmentExpanded, setIsEnrichmentExpanded] = useState(true);
+  const [isBriefingExpanded, setIsBriefingExpanded] = useState(true);
+  const [hasScrolledToStatus, setHasScrolledToStatus] = useState(false);
 
   // Add new state for color cycling
   const [loaderColor, setLoaderColor] = useState("#468BFF");
   
+  // Scroll helper function
+  const scrollToStatus = () => {
+    if (!hasScrolledToStatus && statusRef.current) {
+      const yOffset = -20;
+      const y = statusRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      setHasScrolledToStatus(true);
+    }
+  };
+
   // Add useEffect for color cycling
   useEffect(() => {
     if (!isResearching) return;
@@ -74,6 +101,17 @@ function App() {
       setCurrentPhase(null);
       setQueries([]);
       setStreamingQueries({});
+      setEnrichmentCounts(undefined);
+      setBriefingStatus({
+        company: false,
+        industry: false,
+        financial: false,
+        news: false
+      });
+      setIsQueriesExpanded(true);
+      setIsEnrichmentExpanded(true);
+      setIsBriefingExpanded(true);
+      setHasScrolledToStatus(false);
       setIsResetting(false);
     }, 300);
   };
@@ -88,41 +126,8 @@ function App() {
         const data = JSON.parse(event.data);
         console.log('[SSE Event]', data); // Debug: Log all SSE events
         
-        if (data.type === 'progress' && data.step) {
-          // Update status with current step
-          const stepNames: Record<string, string> = {
-            'grounding': 'Analyzing company information',
-            'financial_analyst': 'Researching financial data',
-            'news_scanner': 'Scanning latest news',
-            'industry_analyst': 'Analyzing industry trends',
-            'company_analyst': 'Researching company details',
-            'collector': 'Collecting research data',
-            'curator': 'Curating relevant information',
-            'enricher': 'Enriching data with context',
-            'briefing': 'Generating briefings',
-            'editor': 'Finalizing report'
-          };
-          
-          // Map step to phase for animations
-          const phaseMap: Record<string, 'search' | 'enrichment' | 'briefing'> = {
-            'grounding': 'search',
-            'financial_analyst': 'search',
-            'news_scanner': 'search',
-            'industry_analyst': 'search',
-            'company_analyst': 'search',
-            'collector': 'search',
-            'curator': 'search',
-            'enricher': 'enrichment',
-            'briefing': 'briefing',
-            'editor': 'briefing'
-          };
-          
-          setCurrentPhase(phaseMap[data.step] || 'search');
-          setStatus({ 
-            step: data.step, 
-            message: stepNames[data.step] || `Processing ${data.step}...`
-          });
-        } else if (data.type === 'query_generating') {
+        // Direct event-to-phase mapping
+        if (data.type === 'query_generating') {
           // Show query being generated and update streaming queries
           setCurrentPhase('search');
           setStatus({
@@ -160,6 +165,7 @@ function App() {
             delete updated[key];
             return updated;
           });
+          scrollToStatus();
         } else if (data.type === 'research_init') {
           // Show research initialization
           setCurrentPhase('search');
@@ -175,12 +181,27 @@ function App() {
             message: data.message || 'Crawling company website'
           });
         } else if (data.type === 'curation') {
-          // Show curation progress
-          setCurrentPhase('search');
+          // Show curation progress - transition to enrichment phase
+          setCurrentPhase('enrichment');
           setStatus({
             step: 'Curating data',
             message: data.message || `Curating ${data.category} documents`
           });
+          // Initialize enrichment counts when curation starts for a category
+          if (data.category) {
+            setEnrichmentCounts(prev => ({
+              ...prev,
+              [data.category]: {
+                total: data.total || 0,
+                enriched: 0
+              }
+            } as typeof enrichmentCounts));
+          }
+          // Collapse queries section when moving to enrichment
+          setTimeout(() => {
+            setIsQueriesExpanded(false);
+          }, 1000);
+          scrollToStatus();
         } else if (data.type === 'enrichment') {
           // Show enrichment progress
           setCurrentPhase('enrichment');
@@ -188,6 +209,20 @@ function App() {
             step: 'Enriching data',
             message: data.message || 'Enriching documents with additional content'
           });
+          // Update enriched count if provided
+          if (data.category && data.enriched !== undefined) {
+            const category = data.category as 'company' | 'industry' | 'financial' | 'news';
+            setEnrichmentCounts(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                [category]: {
+                  total: prev[category]?.total || data.total || 0,
+                  enriched: data.enriched
+                }
+              } as typeof enrichmentCounts;
+            });
+          }
         } else if (data.type === 'briefing_start') {
           // Show briefing generation starting
           setCurrentPhase('briefing');
@@ -195,13 +230,39 @@ function App() {
             step: 'Generating briefings',
             message: `Creating ${data.category} briefing from ${data.total_docs} documents`
           });
+          // Collapse enrichment section when moving to briefing
+          setTimeout(() => {
+            setIsEnrichmentExpanded(false);
+          }, 1000);
+          scrollToStatus();
         } else if (data.type === 'briefing_complete') {
-          // Show briefing completion
+          // Show briefing completion and mark category as complete
           setCurrentPhase('briefing');
           setStatus({
             step: 'Briefing complete',
             message: `${data.category} briefing generated (${data.content_length} characters)`
           });
+          // Mark briefing as complete for this category
+          if (data.category) {
+            setBriefingStatus(prev => {
+              const newBriefingStatus = {
+                ...prev,
+                [data.category]: true
+              };
+              
+              // Check if all briefings are complete
+              const allBriefingsComplete = Object.values(newBriefingStatus).every(status => status);
+              
+              // Collapse briefing section when all briefings are complete
+              if (allBriefingsComplete) {
+                setTimeout(() => {
+                  setIsBriefingExpanded(false);
+                }, 2000);
+              }
+              
+              return newBriefingStatus;
+            });
+          }
         } else if (data.type === 'report_compilation') {
           // Show report compilation
           setCurrentPhase('briefing');
@@ -422,19 +483,7 @@ function App() {
           statusRef={statusRef}
         />
 
-        {/* Research Queries */}
-        {(queries.length > 0 || Object.keys(streamingQueries).length > 0) && (
-          <ResearchQueries
-            queries={queries}
-            streamingQueries={streamingQueries}
-            isExpanded={isQueriesExpanded}
-            onToggleExpand={() => setIsQueriesExpanded(!isQueriesExpanded)}
-            isResetting={isResetting}
-            glassStyle={glassStyle.card}
-          />
-        )}
-
-        {/* Research Report */}
+        {/* Research Report - always at the top when available */}
         {output && output.details && (
           <ResearchReport
             output={{
@@ -451,6 +500,39 @@ function App() {
             isCopied={isCopied}
             onCopyToClipboard={handleCopyToClipboard}
             onGeneratePdf={handleGeneratePdf}
+          />
+        )}
+
+        {/* Research Briefings - show once briefing starts and keep visible */}
+        {(currentPhase === 'briefing' || currentPhase === 'complete') && (
+          <ResearchBriefings
+            briefingStatus={briefingStatus}
+            isExpanded={isBriefingExpanded}
+            onToggleExpand={() => setIsBriefingExpanded(!isBriefingExpanded)}
+            isResetting={isResetting}
+          />
+        )}
+
+        {/* Curation and Extraction - show once enrichment starts and keep visible */}
+        {(currentPhase === 'enrichment' || currentPhase === 'briefing' || currentPhase === 'complete') && enrichmentCounts && (
+          <CurationExtraction
+            enrichmentCounts={enrichmentCounts}
+            isExpanded={isEnrichmentExpanded}
+            onToggleExpand={() => setIsEnrichmentExpanded(!isEnrichmentExpanded)}
+            isResetting={isResetting}
+            loaderColor={loaderColor}
+          />
+        )}
+
+        {/* Research Queries - always at the bottom when visible */}
+        {(queries.length > 0 || Object.keys(streamingQueries).length > 0) && (
+          <ResearchQueries
+            queries={queries}
+            streamingQueries={streamingQueries}
+            isExpanded={isQueriesExpanded}
+            onToggleExpand={() => setIsQueriesExpanded(!isQueriesExpanded)}
+            isResetting={isResetting}
+            glassStyle={glassStyle.card}
           />
         )}
       </div>

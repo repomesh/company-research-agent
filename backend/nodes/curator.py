@@ -66,7 +66,7 @@ class Curator:
         """Curate all collected data based on Tavily scores."""
         company = state.get('company', 'Unknown Company')
         job_id = state.get('job_id')
-        logger.info(f"Starting curation for company: {company}")
+        logger.info(f"Starting curation for company: {company}, job_id={job_id}")
 
         industry = state.get('industry', 'Unknown')
         context = {
@@ -108,19 +108,20 @@ class Curator:
             docs = list(unique_docs.values())
             msg.append(f"\n{emoji}: Found {len(docs)} documents")
             
-            # Emit curation event
+            evaluated_docs = self.evaluate_documents(docs, context)
+            
+            # Emit curation event with total count
             if job_id:
                 try:
                     if job_id in job_status:
                         job_status[job_id]["events"].append({
                             "type": "curation",
                             "category": doc_type,
+                            "total": len(evaluated_docs) if evaluated_docs else 0,
                             "message": f"Curating {doc_type} documents"
                         })
                 except Exception as e:
                     logger.error(f"Error appending curation event: {e}")
-
-            evaluated_docs = self.evaluate_documents(docs, context)
 
             if not evaluated_docs:
                 msg.append("  ⚠️ No relevant documents found")
