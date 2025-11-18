@@ -18,11 +18,11 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 
 ## Features
 
-- **Multi-Source Research**: Gathers data from various sources including company websites, news articles, financial reports, and industry analyses
+- **Multi-Source Research**: Gathers data from various sources, including company websites, news articles, financial reports, and industry analyses
 - **AI-Powered Content Filtering**: Uses Tavily's relevance scoring for content curation
 - **Asynchronous Processing**: Efficient polling-based architecture for tracking research progress
 - **Dual Model Architecture**:
-  - Gemini 3.0 Flash for high-context research synthesis
+  - Gemini 2.5 Flash for high-context research synthesis
   - GPT-5.1 for precise report formatting and editing
 - **Modern React Frontend**: Responsive UI with progress tracking and download options
 - **Modular Architecture**: Built using a pipeline of specialized research and processing nodes
@@ -42,7 +42,7 @@ The platform follows an agentic framework with specialized nodes that process da
 2. **Processing Nodes**:
    - `Collector`: Aggregates research data from all analyzers
    - `Curator`: Implements content filtering and relevance scoring
-   - `Briefing`: Generates category-specific summaries using Gemini 3.0 Flash
+   - `Briefing`: Generates category-specific summaries using Gemini 2.5 Flash
    - `Editor`: Compiles and formats the briefings into a final report using GPT-5.1
 
    ![web ui](<static/agent-flow.png>)
