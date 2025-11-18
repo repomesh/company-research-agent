@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { MapPin } from 'lucide-react';
 
 interface LocationInputProps {
@@ -14,7 +14,7 @@ declare global {
   }
 }
 
-const LocationInput: React.FC<LocationInputProps> = ({ value, onChange, className }) => {
+const LocationInput = ({ value, onChange, className }: LocationInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteElementRef = useRef<any>(null);
   const [isApiLoaded, setIsApiLoaded] = useState(false);

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, RefObject } from 'react';
+import { useState, useEffect } from 'react';
+import type { RefObject } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 // Sample companies for examples
@@ -60,12 +61,12 @@ export interface ExamplePopupProps {
 }
 
 // Example Popup Component
-const ExamplePopup: React.FC<ExamplePopupProps> = ({
+const ExamplePopup = ({
   visible,
   onExampleSelect,
   glassStyle,
   exampleRef
-}) => {
+}: ExamplePopupProps) => {
   const [selectedExample, setSelectedExample] = useState(0);
   const [isNameAnimating, setIsNameAnimating] = useState(false);
   

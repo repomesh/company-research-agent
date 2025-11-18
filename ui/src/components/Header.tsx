@@ -1,14 +1,11 @@
-import React from 'react';
 import { Github } from 'lucide-react';
 
 interface HeaderProps {
   glassStyle: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ glassStyle }) => {
+const Header = ({ glassStyle }: HeaderProps) => {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('Failed to load Tavily logo');
-    console.log('Image path:', e.currentTarget.src);
     e.currentTarget.style.display = 'none';
   };
 

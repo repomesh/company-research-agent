@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Building2, Factory, Globe, Loader2, Search } from 'lucide-react';
 import LocationInput from './LocationInput';
-import ExamplePopup, { ExampleCompany } from './ExamplePopup';
+import ExamplePopup from './ExamplePopup';
+import type { ExampleCompany } from './ExamplePopup';
 
 interface FormData {
   companyName: string;
@@ -20,12 +21,12 @@ interface ResearchFormProps {
   loaderColor: string;
 }
 
-const ResearchForm: React.FC<ResearchFormProps> = ({
+const ResearchForm = ({
   onSubmit,
   isResearching,
   glassStyle,
   loaderColor
-}) => {
+}: ResearchFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     companyName: "",
     companyUrl: "",

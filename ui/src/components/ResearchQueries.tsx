@@ -1,21 +1,20 @@
-import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { ResearchQueriesProps } from '../types';
+import type { ResearchQueriesProps } from '../types';
+import { fadeInAnimation } from '../styles';
 
-const ResearchQueries: React.FC<ResearchQueriesProps> = ({
+const ResearchQueries = ({
   queries,
   streamingQueries,
   isExpanded,
   onToggleExpand,
   isResetting,
   glassStyle
-}) => {
+}: ResearchQueriesProps) => {
   const glassCardStyle = `${glassStyle} rounded-2xl p-6`;
-  const fadeInAnimation = "transition-all duration-300 ease-in-out";
 
   return (
     <div 
-      className={`${glassCardStyle} ${fadeInAnimation} ${isResetting ? 'opacity-0 transform -translate-y-4' : 'opacity-100 transform translate-y-0'} font-['DM_Sans']`}
+      className={`${glassCardStyle} ${fadeInAnimation.fadeIn} ${isResetting ? 'opacity-0 transform -translate-y-4' : 'opacity-100 transform translate-y-0'} font-['DM_Sans']`}
     >
       <div 
         className="flex items-center justify-between cursor-pointer"

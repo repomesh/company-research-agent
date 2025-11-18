@@ -1,9 +1,8 @@
-import React from 'react';
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { Check, Copy, Download, Loader2 } from 'lucide-react';
-import { GlassStyle, AnimationStyle } from '../types';
+import type { GlassStyle, AnimationStyle } from '../types';
 
 interface ResearchReportProps {
   output: {
@@ -23,7 +22,7 @@ interface ResearchReportProps {
   onGeneratePdf: () => void;
 }
 
-const ResearchReport: React.FC<ResearchReportProps> = ({
+const ResearchReport = ({
   output,
   isResetting,
   isStreaming,
@@ -34,7 +33,7 @@ const ResearchReport: React.FC<ResearchReportProps> = ({
   isCopied,
   onCopyToClipboard,
   onGeneratePdf
-}) => {
+}: ResearchReportProps) => {
   if (!output || !output.details) return null;
 
   return (

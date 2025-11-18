@@ -1,24 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import Header from './components/Header';
-import ResearchStatus from './components/ResearchStatus';
-import ResearchReport from './components/ResearchReport';
-import ResearchForm from './components/ResearchForm';
-import ResearchQueries from './components/ResearchQueries';
-import CurationExtraction from './components/CurationExtraction';
-import ResearchBriefings from './components/ResearchBriefings';
-import { ResearchOutput, ResearchStatusType } from './types';
-import { colorAnimation, dmSansStyle, glassStyle, fadeInAnimation } from './styles';
+import {
+  Header,
+  ResearchStatus,
+  ResearchReport,
+  ResearchForm,
+  ResearchQueries,
+  CurationExtraction,
+  ResearchBriefings
+} from './components';
+import type { ResearchOutput, ResearchStatusType } from './types';
+import { glassStyle, fadeInAnimation } from './styles';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
-// Add styles to document head
-const colorStyle = document.createElement('style');
-colorStyle.textContent = colorAnimation;
-document.head.appendChild(colorStyle);
-
-const dmSansStyleElement = document.createElement('style');
-dmSansStyleElement.textContent = dmSansStyle;
-document.head.appendChild(dmSansStyleElement);
 
 function App() {
 
@@ -126,7 +119,6 @@ function App() {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('[SSE Event]', data); // Debug: Log all SSE events
         
         // Helper function to map node names to user-friendly step names
         const getStepName = (nodeName: string): string => {
@@ -425,13 +417,11 @@ function App() {
       const data = await response.json();
 
       if (data.job_id) {
-        console.log("Starting SSE stream for job_id:", data.job_id);
         streamResults(data.job_id);
       } else {
         throw new Error("No job ID received");
       }
     } catch (err) {
-      console.log("Caught error:", err);
       setError(err instanceof Error ? err.message : "Failed to start research");
       setIsResearching(false);
     }
@@ -443,7 +433,6 @@ function App() {
     
     setIsGeneratingPdf(true);
     try {
-      console.log("Generating PDF with company name:", originalCompanyName);
       const response = await fetch(`${API_URL}/generate-pdf`, {
         method: 'POST',
         headers: {
