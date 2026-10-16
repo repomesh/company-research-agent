@@ -356,7 +356,7 @@ npm run dev
 
 ## 라이선스
 
-이 프로젝트는 MIT 라이선스 하에 라이선스가 부여됩니다 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+이 프로젝트는 Apache License 2.0 하에 라이선스가 부여됩니다 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ## 감사의 말
 

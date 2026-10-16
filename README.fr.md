@@ -361,3 +361,7 @@ Cliquez sur le bouton du modèle en haut à droite de l'application pour ouvrir 
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=guy-hartstein/company-research-agent&type=date&legend=top-left&sealed_token=rVZ57B-p9qQLLTRRBDp35rtvlnI4AXK1HGSdEKraUS5xKABI__fDDwbOQ4DFxHDbSg5kT5whU7PRExyQTS9q2w-f_eICUpXxRSnQc9iUyggTJ3DFpFLrB6BrvfoLkprVCxCQhFyO6So8KZJ24DxC0_7OPdgg5jK3JPyXYmbRa8Zt91A-g90ua2UgtvBA" />
  </picture>
 </a>
+
+## Licence
+
+Ce projet est distribué sous la licence Apache 2.0 - consultez le fichier [LICENSE](LICENSE) pour plus de détails.

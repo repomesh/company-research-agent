@@ -355,7 +355,7 @@ Elige la plataforma que mejor se adapte a tus necesidades. La aplicación es ind
 
 ## Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está licenciado bajo la Licencia Apache 2.0 - consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 ## Agradecimientos
 
