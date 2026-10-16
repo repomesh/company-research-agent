@@ -9,3 +9,5 @@ reportlab==4.5.0
 tavily-python==0.7.24
 uvicorn[standard]==0.38.0
 python-dotenv==1.2.2
+httpx==0.28.1
+

@@ -5,12 +5,13 @@ from langchain_core.messages import AIMessage
 
 from ...classes import ResearchState
 from ...prompts import NEWS_SCANNER_QUERY_PROMPT
+from ...llm import LLMConfig
 from .base import BaseResearcher
 
 
 class NewsScanner(BaseResearcher):
-    def __init__(self, tavily_api_key: str | None = None) -> None:
-        super().__init__(tavily_api_key)
+    def __init__(self, tavily_api_key: str | None = None, llm_config: LLMConfig | None = None) -> None:
+        super().__init__(tavily_api_key, llm_config)
         self.analyst_type = "news_analyzer"
 
     async def analyze(self, state: ResearchState):

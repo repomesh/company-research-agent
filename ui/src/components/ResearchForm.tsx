@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Eye, EyeOff, Factory, Globe, KeyRound, Loader2, Search } from 'lucide-react';
+import { ArrowUpRight, Building2, Eye, EyeOff, Factory, Globe, KeyRound, Loader2, Search } from 'lucide-react';
 import LocationInput from './LocationInput';
 import ExamplePopup, { EXAMPLE_COMPANIES } from './ExamplePopup';
 import type { ExampleCompany } from './ExamplePopup';
@@ -181,9 +181,14 @@ const ResearchForm = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-6">
             <div className="tavily-key-field">
-              <label htmlFor="tavilyApiKey" className="field-label">
-                Tavily API Key <span className="text-gray-900/70">*</span>
-              </label>
+              <div className="tavily-key-heading">
+                <label htmlFor="tavilyApiKey" className="field-label">
+                  Tavily API Key <span className="text-gray-900/70">*</span>
+                </label>
+                <a href="https://app.tavily.com" target="_blank" rel="noopener noreferrer" className="settings-link">
+                  Get a key <ArrowUpRight size={13} />
+                </a>
+              </div>
               <div className="relative">
                 <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 stroke-[#2677FF] z-10" strokeWidth={1.5} />
                 <input

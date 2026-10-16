@@ -21,9 +21,7 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
 - **多源研究**：从公司网站、新闻文章、财务报告和行业分析等多个来源收集数据
 - **AI驱动的内容过滤**：使用Tavily的相关性评分进行内容筛选
 - **异步处理**：基于轮询的高效架构，用于跟踪研究进度
-- **双模型架构**：
-  - Gemini 2.5 Flash用于高上下文研究综合
-  - GPT-5.1用于精确的报告格式化和编辑
+- **灵活的模型选择**：可在设置中选择任意[OpenRouter](https://openrouter.ai)模型，或使用OpenAI/Gemini直连密钥作为备选
 - **现代React前端**：具有进度跟踪和下载选项的响应式UI
 - **模块化架构**：使用专业研究和处理节点构建的管道
 
@@ -42,32 +40,24 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
 2. **处理节点**：
    - `Collector`：汇总所有分析器的研究数据
    - `Curator`：实现内容过滤和相关性评分
-   - `Briefing`：使用Gemini 2.5 Flash生成特定类别的摘要
-   - `Editor`：使用GPT-5.1将简报编译和格式化为最终报告
+   - `Briefing`：使用所选模型生成特定类别的摘要
+   - `Editor`：使用所选模型将简报编译和格式化为最终报告
 
    ![web ui](<static/agent-flow.png>)
 
 ### 内容生成架构
 
-该平台利用不同的模型以获得最佳性能：
+所有LLM步骤（研究节点中的查询生成、`Briefing`和`Editor`）都使用同一个模型，模型提供方在`backend/llm.py`中选择：
 
-1. **Gemini 2.5 Flash**（`briefing.py`）：
-   - 处理高上下文研究综合任务
-   - 擅长处理和总结大量数据
-   - 用于生成初始类别简报
-   - 在多个文档之间高效维护上下文
+1. **OpenRouter（推荐）**：
+   - 当后端`.env`中设置了`OPENROUTER_API_KEY`，或用户在应用设置中粘贴了OpenRouter密钥时启用
+   - 每个步骤都使用在设置中选择的OpenRouter模型
+   - 默认模型为`google/gemini-3.8-flash`，可通过`OPENROUTER_MODEL`覆盖
 
-2. **GPT-5.1**（`editor.py`）：
-   - 专注于精确的格式化和编辑任务
-   - 处理markdown结构和一致性
-   - 在遵循精确格式说明方面表现出色
-   - 用于：
-     - 最终报告编译
-     - 内容去重
-     - Markdown格式化
-     - 实时报告流式传输
-
-这种方法结合了Gemini处理大上下文窗口的优势和GPT-5.1在遵循特定格式说明方面的精确性。
+2. **直连密钥（备选）**：
+   - 没有OpenRouter密钥时，后端回退到`OPENAI_API_KEY`（GPT模型）
+   - 仅当设置了`GEMINI_API_KEY`时，才使用Gemini 2.5 Flash生成简报
+   - Gemini密钥不再是必需的
 
 ### 内容筛选系统
 
@@ -104,7 +94,9 @@ https://github.com/user-attachments/assets/071aa491-009b-4d76-a698-88863149e71c
    - 完成时显示最终报告
 
 3. **API端点**：
-   - `POST /research`：提交新的研究请求
+   - `POST /research`：提交新的研究请求（可选参数`openrouter_api_key`和`model`）
+   - `GET /models`：列出OpenRouter上可用的文本模型（缓存1小时）
+   - `GET /config`：返回服务器已配置的LLM密钥及默认模型
    - `GET /research/{job_id}/report`：轮询已完成的报告
    - `POST /generate-pdf`：从报告内容生成PDF
 
@@ -132,7 +124,7 @@ chmod +x setup.sh
 - 检查所需的Python和Node.js版本
 - 可选创建Python虚拟环境（推荐）
 - 安装所有依赖（Python和Node.js）
-- 指导您设置环境变量
+- 指导您设置环境变量（会询问您的Tavily密钥和OpenRouter密钥；仅在跳过OpenRouter密钥时才询问OpenAI/Gemini密钥）
 - 可选启动后端和前端服务器
 
 > **💡 专业提示**: 安装 [uv](https://github.com/astral-sh/uv) 以获得显著更快的 Python 包安装：
@@ -143,9 +135,10 @@ chmod +x setup.sh
 
 您需要准备以下API密钥：
 - Tavily API密钥
-- Google Gemini API密钥
-- OpenAI API密钥
-- Google Maps API密钥
+- OpenRouter API密钥（推荐，也可以稍后在应用设置中粘贴）
+- OpenAI API密钥（仅在不使用OpenRouter时需要）
+- Google Gemini API密钥（可选）
+- Google Maps API密钥（可选，仅用于地点自动补全）
 - MongoDB URI（可选）
 
 ### 手动安装
@@ -193,8 +186,13 @@ npm install
 
 ```env
 TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+# 推荐：一个密钥即可使用所有模型（也可以改为在应用设置中粘贴密钥）
+OPENROUTER_API_KEY=your_openrouter_key
+# 可选的默认模型；用户仍可在设置中选择其他模型
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# OpenRouter的替代方案：直接使用模型提供方的密钥
+# OPENAI_API_KEY=your_openai_key
+# GEMINI_API_KEY=your_gemini_key
 
 # 可选：启用MongoDB持久化
 # MONGODB_URI=your_mongodb_connection_string
@@ -235,8 +233,13 @@ Docker 设置使用两个单独的 `.env` 文件。
 
 ```env
 TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+# 推荐：一个密钥即可使用所有模型（也可以改为在应用设置中粘贴密钥）
+OPENROUTER_API_KEY=your_openrouter_key
+# 可选的默认模型；用户仍可在设置中选择其他模型
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# OpenRouter的替代方案：直接使用模型提供方的密钥
+# OPENAI_API_KEY=your_openai_key
+# GEMINI_API_KEY=your_gemini_key
 
 # 可选：启用MongoDB持久化
 # MONGODB_URI=your_mongodb_connection_string
@@ -298,6 +301,10 @@ npm run dev
 > **⚡ 性能说明**: 如果您在设置过程中使用了 `uv`，您将受益于显著更快的包安装和依赖解析。`uv` 是一个用 Rust 编写的现代 Python 包管理器，比 pip 快 10-100 倍。
 
 ## 使用方法
+
+### 选择模型
+
+点击应用右上角的模型按钮即可打开**设置**面板。您可以在此粘贴OpenRouter密钥（仅保存在您的浏览器中，并随每次研究请求一起发送），并按提供方搜索或筛选完整的OpenRouter模型目录。所选模型将用于研究管道的每个步骤；如果没有可用的OpenRouter密钥，后端会回退到`OPENAI_API_KEY`（设置了`GEMINI_API_KEY`时使用Gemini生成简报）。
 
 ### 本地开发
 

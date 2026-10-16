@@ -6,9 +6,12 @@ import {
   ResearchForm,
   ResearchQueries,
   CurationExtraction,
-  ResearchBriefings
+  ResearchBriefings,
+  SettingsPanel
 } from './components';
 import type { ResearchOutput, ResearchStatusType } from './types';
+import { useLLMSettings, type ServerConfig } from './settings';
+import { fallbackModelName, providerOf, type ModelInfo } from './models';
 import { glassStyle, fadeInAnimation } from './styles';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -46,6 +49,38 @@ function App() {
   const [isBriefingExpanded, setIsBriefingExpanded] = useState(true);
   const [hasScrolledToStatus, setHasScrolledToStatus] = useState(false);
   const [isReportStreaming, setIsReportStreaming] = useState(false);
+
+  // LLM settings (OpenRouter key + model), server capabilities, and the OpenRouter model catalog
+  const [llmSettings, updateLlmSettings] = useLLMSettings();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/config`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then(setServerConfig)
+      .catch(() => setServerConfig(null));
+
+    fetch(`${API_URL}/models`)
+      .then((response) => {
+        if (!response.ok) throw new Error();
+        return response.json();
+      })
+      .then((data) => setModels(data.models ?? []))
+      .catch(() => setModelsError('Could not load models from OpenRouter. Check that the backend is running.'))
+      .finally(() => setModelsLoading(false));
+  }, []);
+
+  const selectedModel = llmSettings.model || serverConfig?.default_model || 'google/gemini-3.8-flash';
+  const selectedModelInfo = models.find((model) => model.id === selectedModel);
+  const hasLlmProvider = !!llmSettings.openrouterApiKey.trim()
+    || !!serverConfig?.openrouter_configured
+    || !!serverConfig?.openai_configured;
+  // Only nag once we know the server has no key of its own
+  const needsLlmSetup = serverConfig !== null && !hasLlmProvider;
 
   // Add new state for color cycling
   const [loaderColor, setLoaderColor] = useState("#2677FF");
@@ -364,6 +399,11 @@ function App() {
     // Clear any existing errors first
     setError(null);
 
+    if (needsLlmSetup) {
+      setIsSettingsOpen(true);
+      return;
+    }
+
     // If research is complete, reset the UI first
     if (isComplete) {
       resetResearch();
@@ -399,6 +439,8 @@ function App() {
         industry: formData.companyIndustry || undefined,
         hq_location: formData.companyHq || undefined,
         tavily_api_key: formData.tavilyApiKey.trim(),
+        openrouter_api_key: llmSettings.openrouterApiKey.trim() || undefined,
+        model: selectedModel,
       };
 
       const response = await fetch(url, {
@@ -501,7 +543,12 @@ function App() {
       </div>
       <div className="research-workspace">
         {/* Header Component */}
-        <Header />
+        <Header
+          modelName={selectedModelInfo?.name ?? fallbackModelName(selectedModel)}
+          modelProvider={selectedModelInfo?.provider ?? providerOf(selectedModel)}
+          needsSetup={needsLlmSetup}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
 
         {/* Form Section */}
         <ResearchForm 
@@ -591,6 +638,17 @@ function App() {
           </a>
         </footer>
       </div>
+      <SettingsPanel
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={llmSettings}
+        onChange={updateLlmSettings}
+        serverConfig={serverConfig}
+        models={models}
+        modelsLoading={modelsLoading}
+        modelsError={modelsError}
+        selectedModel={selectedModel}
+      />
     </div>
   );
 }

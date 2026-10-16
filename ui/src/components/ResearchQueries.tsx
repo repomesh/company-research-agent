@@ -1,6 +1,18 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { ResearchQueriesProps } from '../types';
 import { fadeInAnimation } from '../styles';
+import { useSmoothText } from '../hooks/useSmooth';
+
+const QueryItem = ({ text, isStreaming }: { text: string; isStreaming: boolean }) => {
+  const { text: visibleText, isRevealing } = useSmoothText(text);
+  const showCursor = isStreaming || isRevealing;
+  return (
+    <div className={`backdrop-filter backdrop-blur-lg bg-white/80 border rounded-lg p-2 transition-colors duration-500 ${showCursor ? 'border-[#2677FF]/30' : 'border-gray-200'}`}>
+      <span className="text-gray-600">{visibleText}</span>
+      {showCursor && <span className="animate-pulse ml-1 text-[#8FBCFA]">|</span>}
+    </div>
+  );
+};
 
 const ResearchQueries = ({
   queries,
@@ -42,22 +54,20 @@ const ResearchQueries = ({
                 {category.charAt(0).toUpperCase() + category.slice(1)} Queries
               </h3>
               <div className="space-y-2">
-                {/* Show streaming queries first */}
-                {Object.entries(streamingQueries)
-                  .filter(([key]) => key.startsWith(category))
-                  .map(([key, query]) => (
-                    <div key={key} className="backdrop-filter backdrop-blur-lg bg-white/80 border border-[#2677FF]/30 rounded-lg p-2">
-                      <span className="text-gray-600">{query.text}</span>
-                      <span className="animate-pulse ml-1 text-[#8FBCFA]">|</span>
-                    </div>
-                  ))}
-                {/* Then show completed queries */}
-                {queries
-                  .filter((q) => q.category.startsWith(category))
-                  .map((query, idx) => (
-                    <div key={idx} className="backdrop-filter backdrop-blur-lg bg-white/80 border border-gray-200 rounded-lg p-2">
-                      <span className="text-gray-600">{query.text}</span>
-                    </div>
+                {/* Streaming and completed queries share a key per query number, so a query
+                    keeps its place and its reveal animation when it finishes streaming */}
+                {[
+                  ...queries
+                    .filter((q) => q.category.startsWith(category))
+                    .map((q) => ({ number: q.number, text: q.text, isStreaming: false })),
+                  ...Object.values(streamingQueries)
+                    .filter((q) => q.category.startsWith(category))
+                    .filter((q) => !queries.some((done) => done.category === q.category && done.number === q.number))
+                    .map((q) => ({ number: q.number, text: q.text, isStreaming: true })),
+                ]
+                  .sort((a, b) => a.number - b.number)
+                  .map((query) => (
+                    <QueryItem key={`${category}-${query.number}`} text={query.text} isStreaming={query.isStreaming} />
                   ))}
               </div>
             </div>

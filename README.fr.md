@@ -21,9 +21,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 - **Recherche Multi-Sources** : Récupère des données de diverses sources, y compris les sites web d'entreprise, articles de presse, rapports financiers et analyses sectorielles
 - **Filtrage de contenu par IA** : Utilise le score de pertinence de Tavily pour la curation du contenu
 - **Traitement Asynchrone** : Architecture efficace basée sur le polling pour suivre la progression de la recherche
-- **Architecture à double modèle** :
-  - Gemini 2.5 Flash pour la synthèse de recherche à large contexte
-  - GPT-5.1 pour la mise en forme et l'édition précises du rapport
+- **Choix flexible du modèle** : Utilisez n'importe quel modèle OpenRouter sélectionné dans les Paramètres, ou des clés OpenAI/Gemini directes en solution de repli
 - **Frontend React moderne** : Interface réactive avec suivi de progression et options de téléchargement
 - **Architecture modulaire** : Construite autour d'un pipeline de nœuds spécialisés de recherche et de traitement
 
@@ -42,32 +40,23 @@ La plateforme suit un cadre agentique avec des nœuds spécialisés qui traitent
 2. **Nœuds de Traitement** :
    - `Collector` : Agrège les données de recherche de tous les analyseurs
    - `Curator` : Met en œuvre le filtrage de contenu et le scoring de pertinence
-   - `Briefing` : Génère des synthèses par catégorie à l'aide de Gemini 2.5 Flash
-   - `Editor` : Compile et met en forme les synthèses dans un rapport final avec GPT-5.1
+   - `Briefing` : Génère des synthèses par catégorie à l'aide du modèle sélectionné
+   - `Editor` : Compile et met en forme les synthèses dans un rapport final avec le modèle sélectionné
 
    ![web ui](<static/agent-flow.png>)
 
 ### Architecture de Génération de Contenu
 
-La plateforme exploite des modèles distincts pour des performances optimales :
+Toutes les étapes LLM (génération des requêtes par les chercheurs, `Briefing` et `Editor`) utilisent un seul et même modèle. Le fournisseur est choisi dans `backend/llm.py` :
 
-1. **Gemini 2.5 Flash** (`briefing.py`) :
-   - Gère la synthèse de recherche à large contexte
-   - Excelle dans le traitement et le résumé de grands volumes de données
-   - Utilisé pour générer les synthèses initiales par catégorie
-   - Efficace pour maintenir le contexte sur plusieurs documents
+1. **OpenRouter** (recommandé) :
+   - Activé lorsqu'une clé OpenRouter est disponible (`OPENROUTER_API_KEY` dans le `.env` du backend, ou collée dans le panneau Paramètres de l'application)
+   - Chaque étape utilise le modèle OpenRouter sélectionné dans les Paramètres
+   - Modèle par défaut : `google/gemini-3.8-flash`, modifiable via `OPENROUTER_MODEL`
 
-2. **GPT-5.1** (`editor.py`) :
-   - Spécialisé dans la mise en forme et l'édition précises
-   - Gère la structure markdown et la cohérence
-   - Supérieur pour suivre des instructions de formatage exactes
-   - Utilisé pour :
-     - Compilation du rapport final
-     - Déduplication du contenu
-     - Mise en forme markdown
-     - Streaming du rapport en temps réel
-
-Cette approche combine la capacité de Gemini à gérer de larges fenêtres de contexte avec la précision de GPT-5.1 pour le respect des consignes de formatage.
+2. **Clés directes** (repli) :
+   - Sans clé OpenRouter, le backend utilise `OPENAI_API_KEY` (modèles GPT)
+   - Gemini 2.5 Flash est utilisé pour les synthèses uniquement si `GEMINI_API_KEY` est défini ; une clé Gemini n'est plus obligatoire
 
 ### Système de Curation de Contenu
 
@@ -104,9 +93,11 @@ La plateforme implémente un système de communication simple basé sur le polli
    - Affiche le rapport final une fois terminé
 
 3. **Endpoints de l'API** :
-   - `POST /research` : Soumettre une nouvelle demande de recherche
+   - `POST /research` : Soumettre une nouvelle demande de recherche (accepte en option `openrouter_api_key` et `model`)
    - `GET /research/{job_id}/report` : Polling pour le rapport terminé
    - `POST /generate-pdf` : Générer un PDF du contenu du rapport
+   - `GET /models` : Lister les modèles texte OpenRouter (mis en cache pendant 1 heure)
+   - `GET /config` : Indiquer quelles clés LLM le serveur possède, ainsi que le modèle par défaut
 
 ## Configuration
 
@@ -133,6 +124,7 @@ Le script de configuration va :
 - Créer éventuellement un environnement virtuel Python (recommandé)
 - Installer toutes les dépendances (Python et Node.js)
 - Vous guider dans la configuration de vos variables d'environnement
+- Vous demander votre clé OpenRouter (recommandée, peut être ignorée ; les clés OpenAI/Gemini ne sont demandées que si vous l'ignorez)
 - Démarrer éventuellement les serveurs backend et frontend
 
 > **💡 Conseil Pro** : Installez [uv](https://github.com/astral-sh/uv) pour une installation significativement plus rapide des paquets Python :
@@ -144,9 +136,10 @@ Le script de configuration va :
 Vous aurez besoin des clés API suivantes :
 
 - Clé API Tavily
-- Clé API Google Gemini
-- Clé API OpenAI
-- Clé API Google Maps
+- Clé API OpenRouter (recommandée — vous pouvez aussi la coller plus tard dans les Paramètres)
+- Clé API OpenAI (uniquement si vous n'utilisez pas OpenRouter)
+- Clé API Google Gemini (optionnel)
+- Clé API Google Maps (optionnel, uniquement pour l'autocomplétion des lieux)
 - URI MongoDB (optionnel)
 
 ### Configuration Manuelle
@@ -197,8 +190,13 @@ Créez un fichier `.env` dans le répertoire racine du projet et ajoutez vos cl�
 
 ```env
 TAVILY_API_KEY=votre_clé_tavily
-GEMINI_API_KEY=votre_clé_gemini
-OPENAI_API_KEY=votre_clé_openai
+# Recommandé : une seule clé pour tous les modèles (ou collez une clé dans les Paramètres de l'application)
+OPENROUTER_API_KEY=votre_clé_openrouter
+# Modèle par défaut optionnel ; les utilisateurs peuvent toujours en choisir un autre dans les Paramètres
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# Alternative à OpenRouter : clés directes des fournisseurs
+# OPENAI_API_KEY=votre_clé_openai
+# GEMINI_API_KEY=votre_clé_gemini
 
 # Optionnel : Activez la persistance MongoDB
 # MONGODB_URI=votre_chaîne_de_connexion_mongodb
@@ -240,8 +238,13 @@ Créez un fichier `.env` dans le répertoire racine du projet et ajoutez vos cl�
 
 ```env
 TAVILY_API_KEY=votre_clé_tavily
-GEMINI_API_KEY=votre_clé_gemini
-OPENAI_API_KEY=votre_clé_openai
+# Recommandé : une seule clé pour tous les modèles (ou collez une clé dans les Paramètres de l'application)
+OPENROUTER_API_KEY=votre_clé_openrouter
+# Modèle par défaut optionnel ; les utilisateurs peuvent toujours en choisir un autre dans les Paramètres
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# Alternative à OpenRouter : clés directes des fournisseurs
+# OPENAI_API_KEY=votre_clé_openai
+# GEMINI_API_KEY=votre_clé_gemini
 
 # Optionnel : Activez la persistance MongoDB
 # MONGODB_URI=votre_chaîne_de_connexion_mongodb
@@ -307,6 +310,10 @@ npm run dev
 3. Accédez à l'application sur `http://localhost:5173`
 
 ## Utilisation
+
+### Choisir un modèle
+
+Cliquez sur le bouton du modèle en haut à droite de l'application pour ouvrir les **Paramètres**. Vous pouvez y coller une clé OpenRouter (stockée uniquement dans votre navigateur et envoyée avec chaque demande de recherche) et rechercher ou filtrer le catalogue complet des modèles OpenRouter par fournisseur. Le modèle sélectionné est utilisé pour toutes les étapes du pipeline de recherche. Sans clé OpenRouter, le backend se rabat sur `OPENAI_API_KEY` (avec Gemini pour les synthèses si `GEMINI_API_KEY` est défini).
 
 ### Développement Local
 

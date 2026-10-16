@@ -33,8 +33,11 @@ class Enricher:
             return {url: ''}
         return {url: ''}
 
-    async def fetch_raw_content(self, urls: List[str]) -> Dict[str, str]:
-        """Fetch raw content for multiple URLs in parallel with rate limiting."""
+    async def fetch_raw_content(self, urls: List[str], on_enriched=None) -> Dict[str, str]:
+        """Fetch raw content for multiple URLs in parallel with rate limiting.
+
+        on_enriched is called each time a URL returns non-empty content.
+        """
         raw_contents = {}
         
         # Create batches
@@ -45,8 +48,13 @@ class Enricher:
         
         async def process_batch(batch_urls: List[str]) -> Dict[str, str]:
             async with semaphore:
-                tasks = [self.fetch_single_content(url) for url in batch_urls]
-                results = await asyncio.gather(*tasks)
+                async def fetch_and_report(url: str) -> Dict[str, str]:
+                    result = await self.fetch_single_content(url)
+                    if on_enriched and result.get(url):
+                        on_enriched()
+                    return result
+
+                results = await asyncio.gather(*[fetch_and_report(url) for url in batch_urls])
                 
                 batch_contents = {}
                 for result in results:
@@ -124,7 +132,22 @@ class Enricher:
         if enrichment_tasks:
             async def process_category(task):
                 try:
-                    raw_contents = await self.fetch_raw_content(list(task['docs'].keys()))
+                    progress = {'enriched': 0}
+                    total = len(task['docs'])
+
+                    def report_progress():
+                        # Stream per-document progress so the UI counts up as extracts land
+                        progress['enriched'] += 1
+                        if job_id and job_id in job_status:
+                            job_status[job_id]["events"].append({
+                                "type": "enrichment",
+                                "category": task['category'],
+                                "enriched": progress['enriched'],
+                                "total": total,
+                                "message": f"Enriched {progress['enriched']}/{total} {task['label']} documents"
+                            })
+
+                    raw_contents = await self.fetch_raw_content(list(task['docs'].keys()), report_progress)
                     
                     enriched_count = 0
                     for url, content in raw_contents.items():

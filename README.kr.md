@@ -21,9 +21,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 - **멀티소스 조사**: 기업 웹사이트, 뉴스 기사, 재무 보고서, 업계 분석 등 다양한 소스에서 데이터 수집
 - **AI 콘텐츠 필터링**: Tavily의 관련성 점수를 사용한 콘텐츠 큐레이션
 - **비동기 처리**: 조사 진행 상황을 추적하기 위한 효율적인 폴링 기반 아키텍처
-- **듀얼 모델 아키텍처**:
-  - 대규모 컨텍스트 조사 종합을 위한 Gemini 2.5 Flash
-  - 정밀한 보고서 형식 지정 및 편집을 위한 GPT-5.1
+- **유연한 모델 선택**: 설정에서 고른 OpenRouter 모델 하나로 모든 단계를 실행하며, 대안으로 OpenAI/Gemini API 키를 직접 사용할 수도 있습니다
 - **모던 React 프론트엔드**: 진행 상황 추적과 다운로드 옵션을 갖춘 반응형 인터페이스
 - **모듈러 아키텍처**: 전문화된 조사 및 처리 노드 파이프라인을 중심으로 구축
 
@@ -42,32 +40,22 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 2. **처리 노드**:
    - `Collector`: 모든 분석기에서 조사 데이터 집계
    - `Curator`: 콘텐츠 필터링 및 관련성 점수 매기기 구현
-   - `Briefing`: Gemini 2.5 Flash를 사용하여 카테고리별 요약 생성
-   - `Editor`: GPT-5.1로 요약을 최종 보고서로 컴파일 및 형식 지정
+   - `Briefing`: 선택한 모델을 사용하여 카테고리별 요약 생성
+   - `Editor`: 선택한 모델로 요약을 최종 보고서로 컴파일 및 형식 지정
 
    ![web ui](<static/agent-flow.png>)
 
 ### 콘텐츠 생성 아키텍처
 
-이 플랫폼은 최적의 성능을 위해 서로 다른 모델을 활용합니다:
+모든 LLM 단계(조사 노드의 쿼리 생성, `Briefing`, `Editor`)는 하나의 모델을 사용합니다. 어떤 공급자를 사용할지는 `backend/llm.py`에서 결정됩니다:
 
-1. **Gemini 2.5 Flash** (`briefing.py`):
-   - 대규모 컨텍스트 조사 종합 처리
-   - 대량의 데이터 처리 및 요약에 뛰어남
-   - 카테고리별 초기 요약 생성에 사용
-   - 여러 문서에 걸친 컨텍스트 유지에 효율적
+1. **OpenRouter** (권장):
+   - OpenRouter 키가 있으면(백엔드 `.env`의 `OPENROUTER_API_KEY` 또는 앱 설정 패널에 붙여넣은 키) 모든 단계에서 설정에서 선택한 OpenRouter 모델을 사용합니다
+   - 기본 모델은 `google/gemini-3.8-flash`이며, `OPENROUTER_MODEL`로 변경할 수 있습니다
 
-2. **GPT-5.1** (`editor.py`):
-   - 정밀한 형식 지정 및 편집에 특화
-   - Markdown 구조 및 일관성 처리
-   - 정확한 형식 지정 지침 준수에 우수
-   - 다음 용도로 사용:
-     - 최종 보고서 컴파일
-     - 콘텐츠 중복 제거
-     - Markdown 형식 지정
-     - 실시간 보고서 스트리밍
-
-이 접근 방식은 Gemini의 대규모 컨텍스트 윈도우 처리 능력과 GPT-5.1의 형식 지정 지침 정밀도를 결합합니다.
+2. **직접 공급자 키** (대안):
+   - OpenRouter 키가 없으면 `OPENAI_API_KEY`(GPT 모델)를 사용합니다
+   - `GEMINI_API_KEY`가 설정된 경우에만 브리핑에 Gemini 2.5 Flash를 사용합니다 (Gemini 키는 더 이상 필수가 아닙니다)
 
 ### 콘텐츠 큐레이션 시스템
 
@@ -104,9 +92,11 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
    - 완료 시 최종 보고서 표시
 
 3. **API 엔드포인트**:
-   - `POST /research`: 새 조사 요청 제출
+   - `POST /research`: 새 조사 요청 제출 (선택적으로 `openrouter_api_key` 및 `model` 지정 가능)
    - `GET /research/{job_id}/report`: 완료된 보고서 폴링
    - `POST /generate-pdf`: 보고서 콘텐츠에서 PDF 생성
+   - `GET /models`: OpenRouter 텍스트 모델 목록 (1시간 캐시)
+   - `GET /config`: 서버에 설정된 LLM 키 정보 및 기본 모델
 
 ## 설정
 
@@ -132,7 +122,7 @@ chmod +x setup.sh
 - 필요한 Python 및 Node.js 버전 확인
 - Python 가상 환경 생성 (권장)
 - 모든 종속성 설치 (Python 및 Node.js)
-- 환경 변수 설정 안내
+- 환경 변수 설정 안내 (Tavily 키와 OpenRouter 키 입력 요청, OpenRouter 키를 건너뛴 경우에만 OpenAI/Gemini 키 요청)
 - 백엔드 및 프론트엔드 서버 시작 (선택사항)
 
 > **💡 프로 팁**: [uv](https://github.com/astral-sh/uv)를 설치하여 훨씬 빠른 Python 패키지 설치를 이용하세요:
@@ -143,9 +133,10 @@ chmod +x setup.sh
 
 다음 API 키가 필요합니다:
 - Tavily API 키
-- Google Gemini API 키
-- OpenAI API 키
-- Google Maps API 키
+- OpenRouter API 키 (권장 - 나중에 앱 설정에서 붙여넣을 수도 있음)
+- OpenAI API 키 (OpenRouter를 사용하지 않는 경우에만)
+- Google Gemini API 키 (선택사항)
+- Google Maps API 키 (선택사항 - 위치 자동완성에만 필요)
 - MongoDB URI (선택사항)
 
 ### 수동 설정
@@ -193,8 +184,13 @@ npm install
 
 ```env
 TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+# 권장: 모든 모델에 사용할 수 있는 단일 키 (또는 앱 설정에 키를 붙여넣기)
+OPENROUTER_API_KEY=your_openrouter_key
+# 선택사항: 기본 모델 (사용자는 설정에서 다른 모델을 선택할 수 있음)
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# OpenRouter 대안: 공급자 키 직접 사용
+# OPENAI_API_KEY=your_openai_key
+# GEMINI_API_KEY=your_gemini_key
 
 # 선택사항: MongoDB 지속성 활성화
 # MONGODB_URI=your_mongodb_connection_string
@@ -235,8 +231,13 @@ Docker 설정은 두 개의 별도 `.env` 파일을 사용합니다.
 
 ```env
 TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+# 권장: 모든 모델에 사용할 수 있는 단일 키 (또는 앱 설정에 키를 붙여넣기)
+OPENROUTER_API_KEY=your_openrouter_key
+# 선택사항: 기본 모델 (사용자는 설정에서 다른 모델을 선택할 수 있음)
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# OpenRouter 대안: 공급자 키 직접 사용
+# OPENAI_API_KEY=your_openai_key
+# GEMINI_API_KEY=your_gemini_key
 
 # 선택사항: MongoDB 지속성 활성화
 # MONGODB_URI=your_mongodb_connection_string
@@ -298,6 +299,10 @@ npm run dev
 > **⚡ 성능 참고사항**: 설정 중에 `uv`를 사용했다면 훨씬 빠른 패키지 설치와 종속성 해결의 이점을 얻을 수 있습니다. `uv`는 Rust로 작성된 현대적인 Python 패키지 관리자로 pip보다 10-100배 빠를 수 있습니다.
 
 ## 사용법
+
+### 모델 선택
+
+앱 오른쪽 상단의 모델 버튼을 클릭하면 **설정** 패널이 열립니다. 여기서 OpenRouter 키를 붙여넣을 수 있으며(브라우저에만 저장되고 각 조사 요청과 함께 전송됨), 전체 OpenRouter 모델 카탈로그를 공급자별로 검색하거나 필터링할 수 있습니다. 선택한 모델은 조사 파이프라인의 모든 단계에 사용됩니다. OpenRouter 키가 없으면 백엔드는 `OPENAI_API_KEY`로 대체하며, `GEMINI_API_KEY`가 설정된 경우 브리핑에는 Gemini를 사용합니다.
 
 ### 로컬 개발
 

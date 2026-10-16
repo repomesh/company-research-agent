@@ -5,6 +5,7 @@ from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph
 
 from .classes.state import InputState
+from .llm import LLMConfig
 from .nodes import GroundingNode
 from .nodes.briefing import Briefing
 from .nodes.collector import Collector
@@ -21,8 +22,10 @@ from .nodes.researchers import (
 logger = logging.getLogger(__name__)
 
 class Graph:
-    def __init__(self, company=None, url=None, hq_location=None, industry=None, job_id=None, tavily_api_key=None):
+    def __init__(self, company=None, url=None, hq_location=None, industry=None, job_id=None, tavily_api_key=None,
+                 openrouter_api_key=None, model=None):
         self.tavily_api_key = tavily_api_key
+        self.llm_config = LLMConfig.resolve(openrouter_api_key, model)
         # Initialize InputState
         self.input_state = InputState(
             company=company,
@@ -42,15 +45,15 @@ class Graph:
     def _init_nodes(self):
         """Initialize all workflow nodes"""
         self.ground = GroundingNode()
-        self.financial_analyst = FinancialAnalyst(self.tavily_api_key)
-        self.news_scanner = NewsScanner(self.tavily_api_key)
-        self.industry_analyst = IndustryAnalyzer(self.tavily_api_key)
-        self.company_analyst = CompanyAnalyzer(self.tavily_api_key)
+        self.financial_analyst = FinancialAnalyst(self.tavily_api_key, self.llm_config)
+        self.news_scanner = NewsScanner(self.tavily_api_key, self.llm_config)
+        self.industry_analyst = IndustryAnalyzer(self.tavily_api_key, self.llm_config)
+        self.company_analyst = CompanyAnalyzer(self.tavily_api_key, self.llm_config)
         self.collector = Collector()
         self.curator = Curator()
         self.enricher = Enricher(self.tavily_api_key)
-        self.briefing = Briefing()
-        self.editor = Editor()
+        self.briefing = Briefing(self.llm_config)
+        self.editor = Editor(self.llm_config)
 
     def _build_workflow(self):
         """Configure the state graph workflow"""
