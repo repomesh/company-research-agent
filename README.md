@@ -155,4 +155,4 @@ curl -X POST http://localhost:8000/research \
 
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)
