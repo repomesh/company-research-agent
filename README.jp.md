@@ -21,9 +21,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 - **マルチソース調査**：企業ウェブサイト、ニュース記事、財務報告書、業界分析など、様々なソースからデータを取得
 - **AIによるコンテンツフィルタリング**：Tavilyの関連性スコアを使用したコンテンツキュレーション
 - **非同期処理**：調査の進捗を追跡するための効率的なポーリングベースアーキテクチャ
-- **デュアルモデルアーキテクチャ**：
-  - 大規模コンテキスト調査統合のためのGemini 2.5 Flash
-  - 精密なレポート書式設定と編集のためのGPT-5.1
+- **柔軟なモデル選択**：設定パネルで選んだ[OpenRouter](https://openrouter.ai)の任意のモデルを使用可能。フォールバックとしてOpenAI/Geminiの直接キーにも対応
 - **モダンなReactフロントエンド**：進捗追跡とダウンロードオプションを備えたレスポンシブインターフェース
 - **モジュラーアーキテクチャ**：専門的な調査・処理ノードのパイプラインを中心に構築
 
@@ -42,32 +40,22 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 2. **処理ノード**：
    - `Collector`：すべてのアナライザーから調査データを集約
    - `Curator`：コンテンツフィルタリングと関連性スコアリングを実装
-   - `Briefing`：Gemini 2.5 Flashを使用してカテゴリ別の要約を生成
-   - `Editor`：GPT-5.1で要約を最終レポートにコンパイル・書式設定
+   - `Briefing`：選択したモデルを使用してカテゴリ別の要約を生成
+   - `Editor`：選択したモデルで要約を最終レポートにコンパイル・書式設定
 
    ![web ui](<static/agent-flow.png>)
 
 ### コンテンツ生成アーキテクチャ
 
-このプラットフォームは最適なパフォーマンスのために異なるモデルを活用します：
+すべてのLLMステップ（調査ノードでのクエリ生成、`Briefing`、`Editor`）は1つのモデルを使用します。プロバイダーの選択は`backend/llm.py`で行われます：
 
-1. **Gemini 2.5 Flash** (`briefing.py`)：
-   - 大規模コンテキスト調査統合を処理
-   - 大量データの処理と要約に優れる
-   - カテゴリ別の初期要約生成に使用
-   - 複数文書にわたるコンテキスト維持に効率的
+1. **OpenRouter（推奨）**：
+   - OpenRouterキー（バックエンド`.env`の`OPENROUTER_API_KEY`、またはアプリの設定パネルで貼り付けたキー）がある場合、すべてのステップで設定パネルで選択したOpenRouterモデルを使用
+   - デフォルトモデルは`google/gemini-3.8-flash`で、`OPENROUTER_MODEL`で変更可能
 
-2. **GPT-5.1** (`editor.py`)：
-   - 精密な書式設定と編集に特化
-   - Markdown構造と一貫性を処理
-   - 正確な書式設定指示の遵守に優れる
-   - 以下に使用：
-     - 最終レポートのコンパイル
-     - コンテンツの重複除去
-     - Markdown書式設定
-     - リアルタイムレポートストリーミング
-
-このアプローチは、Geminiの大規模コンテキストウィンドウ処理能力とGPT-5.1の書式設定指示精度を組み合わせます。
+2. **フォールバック**：
+   - OpenRouterキーがない場合は`OPENAI_API_KEY`（GPTモデル）を使用
+   - `GEMINI_API_KEY`が設定されている場合のみ、要約生成にGemini 2.5 Flashを使用（Geminiキーは必須ではありません）
 
 ### コンテンツキュレーションシステム
 
@@ -104,7 +92,9 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
    - 完了時に最終レポートを表示
 
 3. **APIエンドポイント**：
-   - `POST /research`：新しい調査リクエストの送信
+   - `POST /research`：新しい調査リクエストの送信（オプションで`openrouter_api_key`と`model`を指定可能）
+   - `GET /models`：OpenRouterで利用可能なテキストモデルの一覧（1時間キャッシュ）
+   - `GET /config`：サーバーに設定済みのLLMキーとデフォルトモデルを返す
    - `GET /research/{job_id}/report`：完了したレポートのポーリング
    - `POST /generate-pdf`：レポートコンテンツからPDFを生成
 
@@ -132,7 +122,7 @@ chmod +x setup.sh
 - 必要なPythonとNode.jsのバージョンを確認
 - Python仮想環境を作成（推奨）
 - すべての依存関係をインストール（PythonとNode.js）
-- 環境変数の設定をガイド
+- 環境変数の設定をガイド（TavilyキーとOpenRouterキーを入力。OpenRouterキーをスキップした場合のみOpenAI/Geminiキーを確認）
 - バックエンドとフロントエンドサーバーを起動（オプション）
 
 > **💡 プロのヒント**: [uv](https://github.com/astral-sh/uv)をインストールすることで、Pythonパッケージの大幅に高速なインストールが可能になります：
@@ -143,9 +133,10 @@ chmod +x setup.sh
 
 以下のAPIキーが必要です：
 - Tavily APIキー
-- Google Gemini APIキー
-- OpenAI APIキー
-- Google Maps APIキー
+- OpenRouter APIキー（推奨。後からアプリの設定パネルで貼り付けることも可能）
+- OpenAI APIキー（OpenRouterを使用しない場合のみ）
+- Google Gemini APIキー（オプション）
+- Google Maps APIキー（オプション。所在地の自動補完にのみ使用）
 - MongoDB URI（オプション）
 
 ### 手動セットアップ
@@ -193,8 +184,13 @@ npm install
 
 ```env
 TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+# 推奨：すべてのモデルに使える1つのキー（代わりにアプリの設定パネルでキーを貼り付けることも可能）
+OPENROUTER_API_KEY=your_openrouter_key
+# オプションのデフォルトモデル。ユーザーは設定パネルで別のモデルを選択可能
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# OpenRouterの代替：各プロバイダーの直接キー
+# OPENAI_API_KEY=your_openai_key
+# GEMINI_API_KEY=your_gemini_key
 
 # オプション：MongoDB永続化を有効化
 # MONGODB_URI=your_mongodb_connection_string
@@ -235,8 +231,13 @@ Docker設定は2つの個別の`.env`ファイルを使用します。
 
 ```env
 TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+# 推奨：すべてのモデルに使える1つのキー（代わりにアプリの設定パネルでキーを貼り付けることも可能）
+OPENROUTER_API_KEY=your_openrouter_key
+# オプションのデフォルトモデル。ユーザーは設定パネルで別のモデルを選択可能
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# OpenRouterの代替：各プロバイダーの直接キー
+# OPENAI_API_KEY=your_openai_key
+# GEMINI_API_KEY=your_gemini_key
 
 # オプション：MongoDB永続化を有効化
 # MONGODB_URI=your_mongodb_connection_string
@@ -296,6 +297,10 @@ npm run dev
 3. `http://localhost:5173`でアプリケーションにアクセス
 
 ## 使用方法
+
+### モデルの選択
+
+アプリ右上のモデルボタンをクリックすると**設定**パネルが開きます。ここではOpenRouterキーを貼り付けたり（キーはブラウザにのみ保存され、各調査リクエストと一緒に送信されます）、OpenRouterのモデルカタログをプロバイダー別にロゴ付きで検索・絞り込みできます。選択したモデルは調査パイプラインのすべてのステップで使用されます。OpenRouterキーがない場合、バックエンドは`OPENAI_API_KEY`にフォールバックします（`GEMINI_API_KEY`が設定されていれば要約生成にGeminiを使用）。
 
 ### ローカル開発
 

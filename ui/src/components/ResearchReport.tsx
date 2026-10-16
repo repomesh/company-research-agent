@@ -3,6 +3,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { Check, Copy, Download, Loader2 } from 'lucide-react';
 import type { GlassStyle, AnimationStyle } from '../types';
+import { useSmoothText } from '../hooks/useSmooth';
 
 interface ResearchReportProps {
   output: {
@@ -34,6 +35,13 @@ const ResearchReport = ({
   onCopyToClipboard,
   onGeneratePdf
 }: ResearchReportProps) => {
+  // Re-rendering markdown is costly, so reveal fast but cap renders at 20fps
+  const { text: visibleReport } = useSmoothText(output?.details?.report || '', {
+    charsPerSecond: 400,
+    catchUpSeconds: 1.2,
+    maxFps: 20,
+  });
+
   if (!output || !output.details) return null;
 
   return (
@@ -183,7 +191,7 @@ const ResearchReport = ({
               ),
             }}
           >
-            {output.details.report || "No report available"}
+            {output.details.report ? visibleReport : "No report available"}
           </ReactMarkdown>
         </div>
       </div>

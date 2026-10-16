@@ -23,10 +23,10 @@ else:
 if not os.getenv("TAVILY_API_KEY"):
     logger.warning("TAVILY_API_KEY environment variable is not set.")
 
-if not os.getenv("OPENAI_API_KEY"):
-    logger.warning("OPENAI_API_KEY environment variable is not set.")
-
-if not os.getenv("GEMINI_API_KEY"):
-    logger.warning("GEMINI_API_KEY environment variable is not set.")
+if not (os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")):
+    logger.warning(
+        "Neither OPENROUTER_API_KEY nor OPENAI_API_KEY is set. "
+        "Research will require an OpenRouter key supplied from the UI settings."
+    )
 
 __all__ = ["Graph"]

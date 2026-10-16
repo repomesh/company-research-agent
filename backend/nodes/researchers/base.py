@@ -4,32 +4,25 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List
 
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from tavily import AsyncTavilyClient
 
 from ...classes import ResearchState
 from ...classes.state import job_status
+from ...llm import LLMConfig, create_llm
 from ...utils.references import clean_title
 from ...prompts import QUERY_FORMAT_GUIDELINES
 
 logger = logging.getLogger(__name__)
 
 class BaseResearcher:
-    def __init__(self, tavily_api_key: str | None = None):
+    def __init__(self, tavily_api_key: str | None = None, llm_config: LLMConfig | None = None):
         tavily_key = tavily_api_key or os.getenv("TAVILY_API_KEY")
-        openai_key = os.getenv("OPENAI_API_KEY")
-        
-        if not tavily_key or not openai_key:
-            raise ValueError("Missing API keys")
+        if not tavily_key:
+            raise ValueError("Missing Tavily API key")
             
         self.tavily_client = AsyncTavilyClient(api_key=tavily_key)
-        self.llm = ChatOpenAI(
-            model="gpt-5.1",
-            temperature=0,
-            streaming=True,
-            api_key=openai_key
-        )
+        self.llm = create_llm("research", llm_config, streaming=True)
         self.analyst_type = "base_researcher"
 
     @property
@@ -95,7 +88,6 @@ class BaseResearcher:
                 # Update job status if job_id provided
                 if job_id:
                     try:
-                        logger.info(f"job_id={job_id}, job_id in job_status={job_id in job_status}")
                         if job_id in job_status:
                             job_status[job_id]["events"].append(event)
 
@@ -138,12 +130,15 @@ class BaseResearcher:
             # Add remaining query
             if current_query.strip():
                 queries.append(current_query.strip())
-                yield {
+                event = {
                     "type": "query_generated",
                     "query": current_query.strip(),
                     "query_number": len(queries),
                     "category": self.analyst_type
                 }
+                if job_id and job_id in job_status:
+                    job_status[job_id]["events"].append(event)
+                yield event
             
             if not queries:
                 raise ValueError(f"No queries generated for {company}")

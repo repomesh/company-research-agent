@@ -1,14 +1,13 @@
 import logging
-import os
 from typing import Dict
 
 from langchain_core.messages import AIMessage
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from ..classes import ResearchState
 from ..classes.state import job_status
+from ..llm import LLMConfig, create_llm
 from ..utils.references import format_references_section
 from ..prompts import (
     EDITOR_SYSTEM_MESSAGE,
@@ -22,18 +21,8 @@ logger = logging.getLogger(__name__)
 class Editor:
     """Compiles individual section briefings into a cohesive final report."""
     
-    def __init__(self) -> None:
-        openai_key = os.getenv("OPENAI_API_KEY")
-        if not openai_key:
-            raise ValueError("OPENAI_API_KEY environment variable is not set")
-        
-        # Configure LangChain ChatOpenAI
-        self.llm = ChatOpenAI(
-            model="gpt-4o",
-            temperature=0,
-            streaming=True,
-            api_key=openai_key
-        )
+    def __init__(self, llm_config: LLMConfig | None = None) -> None:
+        self.llm = create_llm("editor", llm_config, streaming=True)
         
         # Initialize context dictionary
         self.context = {

@@ -1,3 +1,4 @@
+import asyncio
 from typing import TypedDict, NotRequired, Required, Dict, List, Any
 from collections import defaultdict
 from datetime import datetime
@@ -29,6 +30,25 @@ class ResearchState(InputState):
     briefings: Dict[str, Any]
     report: str
 
+class EventQueue(list):
+    """Event list that wakes SSE listeners as soon as a node appends an event."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._signal = asyncio.Event()
+
+    def append(self, item):
+        super().append(item)
+        self._signal.set()
+
+    async def wait(self, timeout: float) -> None:
+        """Wait until a new event is appended or the timeout passes."""
+        try:
+            await asyncio.wait_for(self._signal.wait(), timeout)
+        except asyncio.TimeoutError:
+            pass
+        self._signal.clear()
+
 # Global job status tracker - shared across application.py and backend nodes
 job_status = defaultdict[Any, dict[str, str | list[Any] | None]](lambda: {
     "status": "pending",
@@ -38,5 +58,5 @@ job_status = defaultdict[Any, dict[str, str | list[Any] | None]](lambda: {
     "company": None,
     "report": None,
     "last_update": datetime.now().isoformat(),
-    "events": []  # Queue for events from parallel nodes
+    "events": EventQueue()  # Queue for events from parallel nodes
 })

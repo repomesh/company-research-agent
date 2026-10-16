@@ -1,6 +1,9 @@
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import type { EnrichmentCounts } from '../types';
 import { glassStyle } from '../styles';
+import { useCountUp } from '../hooks/useSmooth';
+
+const CountUp = ({ value }: { value: number }) => <>{useCountUp(value)}</>;
 
 interface CurationExtractionProps {
   enrichmentCounts: EnrichmentCounts | undefined;
@@ -52,7 +55,7 @@ const CurationExtraction = ({
                   <div className="text-2xl font-bold mb-1">
                     {counts ? (
                       <span className="text-[#2677FF]">
-                        {counts.enriched}
+                        <CountUp value={counts.enriched} />
                       </span>
                     ) : (
                       <Loader2 className="animate-spin h-6 w-6 mx-auto loader-icon" style={{ stroke: loaderColor }} />
@@ -60,7 +63,7 @@ const CurationExtraction = ({
                   </div>
                   <div className="text-sm text-gray-600">
                     {counts ? (
-                      `selected from ${counts.total}`
+                      <>selected from <CountUp value={counts.total} /></>
                     ) : (
                       "waiting..."
                     )}

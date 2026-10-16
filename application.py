@@ -2,10 +2,12 @@ import asyncio
 import json
 import logging
 import os
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
 
+import httpx
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -14,9 +16,10 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from backend.graph import Graph
+from backend.llm import DEFAULT_OPENROUTER_MODEL, OPENROUTER_BASE_URL
 from backend.services.mongodb import MongoDBService
 from backend.services.pdf_service import PDFService
-from backend.classes.state import job_status
+from backend.classes.state import EventQueue, job_status
 
 # Load environment variables from .env file at startup
 env_path = Path(__file__).parent / '.env'
@@ -54,6 +57,8 @@ class ResearchRequest(BaseModel):
     industry: str | None = None
     hq_location: str | None = None
     tavily_api_key: str | None = None
+    openrouter_api_key: str | None = None
+    model: str | None = None
 
 class PDFGenerationRequest(BaseModel):
     report_content: str
@@ -101,7 +106,7 @@ async def process_research(job_id: str, data: ResearchRequest):
     """Process research request asynchronously and store results"""
     try:
         if mongodb:
-            mongodb.create_job(job_id, data.model_dump(exclude={"tavily_api_key"}))
+            mongodb.create_job(job_id, data.model_dump(exclude={"tavily_api_key", "openrouter_api_key"}))
         
         await asyncio.sleep(0.5)  # Brief delay
         
@@ -114,6 +119,8 @@ async def process_research(job_id: str, data: ResearchRequest):
             hq_location=data.hq_location,
             job_id=job_id,
             tavily_api_key=data.tavily_api_key,
+            openrouter_api_key=data.openrouter_api_key,
+            model=data.model,
         )
 
         final_state = {}
@@ -172,6 +179,64 @@ async def process_research(job_id: str, data: ResearchRequest):
 async def ping():
     return {"message": "Alive"}
 
+@app.get("/config")
+async def get_config():
+    """Report which LLM credentials the server already has, without exposing them."""
+    return {
+        "openrouter_configured": bool(os.getenv("OPENROUTER_API_KEY")),
+        "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+        "default_model": os.getenv("OPENROUTER_MODEL") or DEFAULT_OPENROUTER_MODEL,
+    }
+
+_models_cache: dict = {"fetched_at": 0.0, "models": []}
+MODELS_CACHE_TTL = 3600
+
+def _per_million(price: str | None) -> float | None:
+    try:
+        value = float(price)
+    except (TypeError, ValueError):
+        return None
+    return round(value * 1_000_000, 4) if value >= 0 else None
+
+@app.get("/models")
+async def list_models():
+    """List text-generation models available on OpenRouter (cached)."""
+    if _models_cache["models"] and time.time() - _models_cache["fetched_at"] < MODELS_CACHE_TTL:
+        return {"models": _models_cache["models"]}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(f"{OPENROUTER_BASE_URL}/models")
+            response.raise_for_status()
+            raw_models = response.json().get("data", [])
+    except Exception as e:
+        logger.warning(f"Failed to fetch OpenRouter models: {e}")
+        if _models_cache["models"]:
+            return {"models": _models_cache["models"]}
+        raise HTTPException(status_code=502, detail="Could not load models from OpenRouter")
+
+    models = []
+    for m in raw_models:
+        model_id = m.get("id", "")
+        output_modalities = (m.get("architecture") or {}).get("output_modalities") or ["text"]
+        prompt_price = _per_million((m.get("pricing") or {}).get("prompt"))
+        if model_id.endswith(":batch") or "text" not in output_modalities or prompt_price is None:
+            continue
+        name = m.get("name") or model_id
+        models.append({
+            "id": model_id,
+            "name": name.split(": ", 1)[-1],
+            "provider": model_id.lstrip("~").split("/", 1)[0],
+            "context_length": m.get("context_length"),
+            "prompt_price": prompt_price,
+            "completion_price": _per_million((m.get("pricing") or {}).get("completion")),
+            "created": m.get("created", 0),
+        })
+    models.sort(key=lambda model: model["created"], reverse=True)
+
+    _models_cache.update(fetched_at=time.time(), models=models)
+    return {"models": models}
+
 @app.get("/research/pdf/{filename}")
 async def get_pdf(filename: str):
     pdf_path = os.path.join("pdfs", filename)
@@ -229,7 +294,11 @@ async def stream_research(job_id: str):
                     yield f"data: {data}\n\n"
                     break
                 
-                await asyncio.sleep(0.1)  # Faster polling for responsive updates
+                # Wake immediately on new events; the timeout catches status changes
+                if isinstance(events, EventQueue):
+                    await events.wait(timeout=0.1)
+                else:
+                    await asyncio.sleep(0.1)
         except Exception as e:
             data = json.dumps({"type": "error", "error": str(e)})
             yield f"data: {data}\n\n"

@@ -151,18 +151,29 @@ if [ "$setup_env" = true ]; then
     echo -e "\nPlease enter your API keys:"
     echo -n "Tavily API Key: "
     read -r tavily_key
-    echo -n "Google Gemini API Key: "
-    read -r gemini_key
-    echo -n "OpenAI API Key: "
-    read -r openai_key
+    echo -e "\n${BLUE}An OpenRouter key lets you pick any model (Claude, GPT, Gemini, ...) from the app's Settings."
+    echo -e "Get one at https://openrouter.ai/keys. You can also skip this and paste a key in Settings later.${NC}"
+    echo -n "OpenRouter API Key (recommended - press enter to skip): "
+    read -r openrouter_key
+
+    gemini_key=""
+    openai_key=""
+    if [ -z "$openrouter_key" ]; then
+        echo -e "\n${YELLOW}No OpenRouter key entered. You can use direct provider keys instead (or add an OpenRouter key in Settings later).${NC}"
+        echo -n "OpenAI API Key (press enter to skip): "
+        read -r openai_key
+        echo -n "Google Gemini API Key (optional - press enter to skip): "
+        read -r gemini_key
+    fi
     echo -n "MongoDB URI (optional - press enter to skip): "
     read -r mongodb_uri
 
     # Create .env file
     cat > .env << EOL
 TAVILY_API_KEY=$tavily_key
-GEMINI_API_KEY=$gemini_key
+OPENROUTER_API_KEY=$openrouter_key
 OPENAI_API_KEY=$openai_key
+GEMINI_API_KEY=$gemini_key
 EOL
 
     # Add MongoDB URI if provided

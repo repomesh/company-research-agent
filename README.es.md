@@ -20,9 +20,7 @@ https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
 - **Investigación Multi-Fuente**: Recopila datos de diversas fuentes, incluyendo sitios web de empresas, artículos de noticias, informes financieros y análisis sectoriales
 - **Filtrado de Contenido Impulsado por IA**: Utiliza la puntuación de relevancia de Tavily para la selección de contenido
 - **Procesamiento Asíncrono**: Arquitectura eficiente basada en polling para rastrear el progreso de la investigación
-- **Arquitectura de Modelo Dual**:
-  - Gemini 2.5 Flash para síntesis de investigación de alto contexto
-  - GPT-5.1 para formato preciso y edición de informes
+- **Selección Flexible de Modelos**: Usa cualquier modelo disponible en [OpenRouter](https://openrouter.ai), elegido desde el panel de Configuración de la aplicación, o claves directas de OpenAI/Gemini como alternativa
 - **Frontend Moderno en React**: Interfaz de usuario receptiva con seguimiento de progreso y opciones de descarga
 - **Arquitectura Modular**: Construido utilizando un sistema de nodos de investigación y procesamiento especializados
 
@@ -41,32 +39,22 @@ La plataforma sigue un marco basado en agentes con nodos especializados que proc
 2. **Nodos de Procesamiento**:
    - `Collector`: Agrega datos de investigación de todos los analizadores
    - `Curator`: Implementa filtrado de contenido y puntuación de relevancia
-   - `Briefing`: Genera resúmenes específicos por categoría utilizando Gemini 2.5 Flash
-   - `Editor`: Compila y formatea los resúmenes en un informe final utilizando GPT-5.1
+   - `Briefing`: Genera resúmenes específicos por categoría utilizando el modelo seleccionado
+   - `Editor`: Compila y formatea los resúmenes en un informe final utilizando el modelo seleccionado
 
    ![interfaz web](<static/agent-flow.png>)
 
 ### Arquitectura de Generación de Contenido
 
-La plataforma aprovecha modelos separados para un rendimiento óptimo:
+Todos los pasos con LLM (generación de consultas en los investigadores, `Briefing` y `Editor`) utilizan un único modelo. El proveedor se elige en `backend/llm.py`:
 
-1. **Gemini 2.5 Flash** (`briefing.py`):
-   - Maneja tareas de síntesis de investigación de alto contexto
-   - Sobresale en el procesamiento y resumen de grandes volúmenes de datos
-   - Utilizado para generar resúmenes iniciales por categoría
-   - Eficiente en mantener el contexto a través de múltiples documentos
+1. **OpenRouter** (recomendado):
+   - Con una clave de OpenRouter (`OPENROUTER_API_KEY` en el `.env` del backend, o pegada en el panel de Configuración de la aplicación), todos los pasos usan el modelo de OpenRouter seleccionado en Configuración
+   - Modelo predeterminado: `google/gemini-3.8-flash`, configurable con `OPENROUTER_MODEL`
 
-2. **GPT-5.1** (`editor.py`):
-   - Se especializa en tareas precisas de formato y edición
-   - Maneja la estructura y consistencia en markdown
-   - Superior en seguir instrucciones exactas de formato
-   - Utilizado para:
-     - Compilación final del informe
-     - Eliminación de duplicados de contenido
-     - Formateo en markdown
-     - Transmisión de informes en tiempo real
-
-Este enfoque combina la fortaleza de Gemini en el manejo de ventanas de contexto grandes con la precisión de GPT-5.1 en seguir instrucciones específicas de formato.
+2. **Claves directas** (alternativa):
+   - Sin clave de OpenRouter, el backend utiliza `OPENAI_API_KEY` (modelos GPT)
+   - Si `GEMINI_API_KEY` está configurada, se usa Gemini 2.5 Flash solo para los resúmenes; la clave de Gemini ya no es obligatoria
 
 ### Sistema de Selección de Contenido
 
@@ -103,7 +91,9 @@ La plataforma implementa un sistema de comunicación simple basado en polling:
    - Muestra el informe final cuando está completo
 
 3. **Endpoints de la API**:
-   - `POST /research`: Enviar nueva solicitud de investigación
+   - `POST /research`: Enviar nueva solicitud de investigación (acepta opcionalmente `openrouter_api_key` y `model`)
+   - `GET /models`: Listar los modelos de texto disponibles en OpenRouter (en caché durante 1 hora)
+   - `GET /config`: Indicar qué claves de LLM tiene configuradas el servidor y el modelo predeterminado
    - `GET /research/{job_id}/report`: Polling para informe completado
    - `POST /generate-pdf`: Generar PDF del contenido del informe
 
@@ -131,7 +121,7 @@ El script de instalación hará lo siguiente:
 - Verificar las versiones requeridas de Python y Node.js
 - Opcionalmente crear un entorno virtual de Python (recomendado)
 - Instalar todas las dependencias (Python y Node.js)
-- Guiarte a través de la configuración de tus variables de entorno
+- Guiarte a través de la configuración de tus variables de entorno (te pedirá tu clave de Tavily y tu clave de OpenRouter; solo pedirá claves de OpenAI/Gemini si omites la de OpenRouter)
 - Opcionalmente iniciar los servidores de backend y frontend
 
 > **💡 Consejo Pro**: Instala [uv](https://github.com/astral-sh/uv) para una instalación significativamente más rápida de paquetes Python:
@@ -142,9 +132,10 @@ El script de instalación hará lo siguiente:
 
 Necesitarás tener listas las siguientes claves API:
 - Clave API de Tavily
-- Clave API de Google Gemini
-- Clave API de OpenAI
-- Clave API de Google Maps
+- Clave API de OpenRouter (recomendada; también puedes pegarla más tarde en Configuración)
+- Clave API de OpenAI (solo si no usas OpenRouter)
+- Clave API de Google Gemini (opcional)
+- Clave API de Google Maps (opcional, solo para el autocompletado de ubicaciones)
 - URI de MongoDB (opcional)
 
 ### Instalación Manual
@@ -192,8 +183,13 @@ Crea un archivo `.env` en el directorio raíz del proyecto y añade tus claves A
 
 ```env
 TAVILY_API_KEY=tu_clave_tavily
-GEMINI_API_KEY=tu_clave_gemini
-OPENAI_API_KEY=tu_clave_openai
+# Recomendado: una sola clave para todos los modelos (o pega una clave en la Configuración de la aplicación)
+OPENROUTER_API_KEY=tu_clave_openrouter
+# Modelo predeterminado opcional; los usuarios pueden elegir otro en Configuración
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# Alternativa a OpenRouter: claves directas de los proveedores
+# OPENAI_API_KEY=tu_clave_openai
+# GEMINI_API_KEY=tu_clave_gemini
 
 # Opcional: Habilitar persistencia en MongoDB
 # MONGODB_URI=tu_cadena_de_conexion_mongodb
@@ -234,8 +230,13 @@ Crea un archivo `.env` en el directorio raíz del proyecto con tus claves API de
 
 ```env
 TAVILY_API_KEY=tu_clave_tavily
-GEMINI_API_KEY=tu_clave_gemini
-OPENAI_API_KEY=tu_clave_openai
+# Recomendado: una sola clave para todos los modelos (o pega una clave en la Configuración de la aplicación)
+OPENROUTER_API_KEY=tu_clave_openrouter
+# Modelo predeterminado opcional; los usuarios pueden elegir otro en Configuración
+# OPENROUTER_MODEL=anthropic/claude-sonnet-5.5
+# Alternativa a OpenRouter: claves directas de los proveedores
+# OPENAI_API_KEY=tu_clave_openai
+# GEMINI_API_KEY=tu_clave_gemini
 
 # Opcional: Habilitar persistencia en MongoDB
 # MONGODB_URI=tu_cadena_de_conexion_mongodb
@@ -274,6 +275,10 @@ Nota: Al actualizar las variables de entorno en `.env`, necesitarás reiniciar l
 ```bash
 docker compose down && docker compose up
 ```
+
+### Elegir un Modelo
+
+Haz clic en el botón del modelo en la esquina superior derecha de la aplicación para abrir **Configuración**. Allí puedes pegar una clave de OpenRouter (se guarda solo en tu navegador y se envía con cada solicitud de investigación) y buscar o filtrar el catálogo de modelos de OpenRouter por proveedor, con sus logotipos. El modelo seleccionado se usa en todos los pasos de la investigación. Si no hay clave de OpenRouter disponible, el backend recurre a `OPENAI_API_KEY` (y a Gemini para los resúmenes si `GEMINI_API_KEY` está configurada).
 
 ### Ejecutando la Aplicación
 
